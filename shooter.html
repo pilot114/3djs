@@ -14,10 +14,22 @@
 				margin: 0px;
 				overflow: hidden;
 			}
+			#info {
+				position: absolute;
+				top: 0;
+				left: 80px;
+				text-align: center;
+				z-index: 100;
+				display:block;
+				background-color: white;
+				padding: 1em;
+				height: 3em;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="container"></div>
+		<div id="info"></div>
 		<script src="js/vendor/three.min.js"></script>
 		<script src="js/vendor/ImprovedNoise.js"></script>
 		<script src="js/vendor/WebGL.js"></script>
@@ -26,99 +38,14 @@
 
 		<script src="js/controls/PointerLockControls.js"></script>
 
+		<script src="js/objects/Sky.js"></script>
+
 		<script src="js/utils/BufferGeometryUtils.js"></script>
 		<script src="js/loaders/GLTFLoader.js"></script>
 
 		<script>
-			// стандартное поведение для 3d мира с физикой и камерой от первого лица + управление
-			function World() {
-				console.log('World create');
-
-				this.container = document.getElementById( 'container' );
-				this.scene = new THREE.Scene();
-				this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 20000 );
-				this.renderer = new THREE.WebGLRenderer( { antialias: true } );
-				this.raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-				this.stats = new Stats();
-				this.controls = new THREE.PointerLockControls( this.camera );
-
-				this.clock = new THREE.Clock();
-				this.prevTime = performance.now();
-
-				this.player = {
-					moveForward: false,
-					moveBackward: false,
-					moveLeft: false,
-					moveRight: false,
-					canJump: false,
-					velocity: new THREE.Vector3(),
-					direction: new THREE.Vector3(),
-				};
-
-				// обработки событий
-				var onKeyDown = (event) => {
-					switch ( event.keyCode ) {
-						case 38: // up
-						case 87: // w
-							this.player.moveForward = true;
-							break;
-						case 37: // left
-						case 65: // a
-							this.player.moveLeft = true;
-							break;
-						case 40: // down
-						case 83: // s
-							this.player.moveBackward = true;
-							break;
-						case 39: // right
-						case 68: // d
-							this.player.moveRight = true;
-							break;
-						case 32: // space
-							if ( this.player.canJump === true ) this.player.velocity.y += 350;
-							this.player.canJump = false;
-							break;
-						case 65: // shift
-							console.log(123);
-							this.player.velocity.x += 350;
-							break;
-					}
-				};
-				var onKeyUp = (event) => {
-					switch ( event.keyCode ) {
-						case 38: // up
-						case 87: // w
-							this.player.moveForward = false;
-							break;
-						case 37: // left
-						case 65: // a
-							this.player.moveLeft = false;
-							break;
-						case 40: // down
-						case 83: // s
-							this.player.moveBackward = false;
-							break;
-						case 39: // right
-						case 68: // d
-							this.player.moveRight = false;
-							break;
-					}
-				};
-				var onWindowResize = () => {
-					this.camera.aspect = window.innerWidth / window.innerHeight;
-					this.camera.updateProjectionMatrix();
-					this.renderer.setSize( window.innerWidth, window.innerHeight );
-				}
-				document.addEventListener( 'keydown', onKeyDown, false );
-				document.addEventListener( 'keyup', onKeyUp, false );
-				window.addEventListener( 'resize', onWindowResize, false );
-
-
-				this.scene.background = new THREE.Color( 0xffffff );
-				this.scene.add( this.controls.getObject() );
-
-
-				// добавляем пол
+			// билдеры объектов
+			function buildMosaicFloor() {
 				var floorGeometry = new THREE.PlaneBufferGeometry( 2000, 2000, 100, 100 );
 				floorGeometry.rotateX( - Math.PI / 2 );
 				var position = floorGeometry.attributes.position;
@@ -140,8 +67,157 @@
 				}
 				floorGeometry.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 				var floorMaterial = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-				var floor = new THREE.Mesh( floorGeometry, floorMaterial );
-				this.scene.add( floor );
+				return new THREE.Mesh( floorGeometry, floorMaterial );
+			}
+			function buildSun() {
+				var sunSphere = new THREE.Mesh(
+					new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+					new THREE.MeshBasicMaterial( { color: 0xffffff } )
+				);
+				sunSphere.position.y = 700000;
+				sunSphere.visible = true;
+				return sunSphere;
+			}
+			function buildSky(sun) {
+				var effectController = {
+					turbidity: 10,
+					rayleigh: 2,
+					mieCoefficient: 0.005,
+					mieDirectionalG: 0.8,
+					luminance: 1,
+					inclination: 0.49, // elevation / inclination
+					azimuth: 0.25, // Facing front,
+					sun: true
+				};
+
+				sky = new THREE.Sky();
+				sky.scale.setScalar( 450000 );
+
+				var uniforms = sky.material.uniforms;
+				uniforms.turbidity.value = effectController.turbidity;
+				uniforms.rayleigh.value = effectController.rayleigh;
+				uniforms.luminance.value = effectController.luminance;
+				uniforms.mieCoefficient.value = effectController.mieCoefficient;
+				uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
+
+				var theta = Math.PI * ( effectController.inclination - 0.5 );
+				var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
+				var distance = 400000;
+
+				sun.position.x = distance * Math.cos( phi );
+				sun.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+				sun.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+
+				sun.visible = effectController.sun;
+
+				uniforms.sunPosition.value.copy( sun.position );
+
+				return sky;
+			}
+
+			// стандартное поведение для 3d мира с физикой и камерой от первого лица + управление
+			function World() {
+				console.log('World create');
+
+				this.container = document.getElementById( 'container' );
+				this.scene = new THREE.Scene();
+				this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 20000 );
+				this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+				this.raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+				this.stats = new Stats();
+				this.controls = new THREE.PointerLockControls( this.camera );
+
+				this.clock = new THREE.Clock();
+				this.prevTime = performance.now();
+
+				this.objects = [];
+				this.frame = 0;
+
+				this.player = {
+					moveForward: false,
+					moveBackward: false,
+					moveLeft: false,
+					moveRight: false,
+					isJump: false,
+					isRun: false,
+					isDuck: false,
+					velocity: new THREE.Vector3(),
+					direction: new THREE.Vector3(),
+				};
+
+				// обработки событий
+				var onKeyDown = (event) => {
+					if (event.shiftKey && this.player.moveForward) {
+						this.player.isRun = true;
+					}
+
+					switch ( event.keyCode ) {
+						case 38: // up
+						case 87: // w
+							this.player.moveForward = true;
+							break;
+						case 37: // left
+						case 65: // a
+							this.player.moveLeft = true;
+							break;
+						case 40: // down
+						case 83: // s
+							this.player.moveBackward = true;
+							break;
+						case 39: // right
+						case 68: // d
+							this.player.moveRight = true;
+							break;
+						case 32: // space
+							if ( this.player.isJump === false ) this.player.velocity.y += 350;
+							this.player.isJump = true;
+							break;
+						case 67: // c
+							if ( this.player.isJump === false ) {
+								this.player.isDuck = true;
+								this.player.isRun = false;
+							}
+							break;
+					}
+				};
+				var onKeyUp = (event) => {
+					switch ( event.keyCode ) {
+						case 38: // up
+						case 87: // w
+							this.player.moveForward = false;
+							this.player.isRun = false;
+							break;
+						case 37: // left
+						case 65: // a
+							this.player.moveLeft = false;
+							break;
+						case 40: // down
+						case 83: // s
+							this.player.moveBackward = false;
+							break;
+						case 39: // right
+						case 68: // d
+							this.player.moveRight = false;
+							break;
+						case 67: // c
+							this.player.isDuck = false;
+							break;
+					}
+
+					if (!event.shiftKey) {
+						this.player.isRun = false;
+					}
+				};
+				var onWindowResize = () => {
+					this.camera.aspect = window.innerWidth / window.innerHeight;
+					this.camera.updateProjectionMatrix();
+					this.renderer.setSize( window.innerWidth, window.innerHeight );
+				}
+				document.addEventListener( 'keydown', onKeyDown, false );
+				document.addEventListener( 'keyup', onKeyUp, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				this.scene.add( this.controls.getObject() );
 
 				// добавляем рендер
 				this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -154,21 +230,26 @@
 					this.controls.lock();
 				}, false );
 
-				this.init = function() {
+				this.init = () => {
+					for (i in this.objects) {
+						// console.log(this.objects[i]);
+						this.scene.add( this.objects[i] );
+					}
+
 					return new Promise(function(resolve, reject) {
 						// Проверка что WebGL работает правильно
 						if ( WEBGL.isWebGLAvailable() === false ) {
 							reject("WEBGL не поддерживается")
 						}
 
-						// Камера
-
 						console.log('World init');
 						// когда всё загрузится
 						resolve();
-					})
+					});
 				},
 				this.update = function() {
+					this.frame +=1;
+
 					this.raycaster.ray.origin.copy( this.controls.getObject().position );
 					this.raycaster.ray.origin.y -= 10;
 					var time = performance.now();
@@ -179,23 +260,58 @@
 					this.player.direction.z = Number( this.player.moveForward ) - Number( this.player.moveBackward );
 					this.player.direction.x = Number( this.player.moveLeft ) - Number( this.player.moveRight );
 					this.player.direction.normalize();
-					if ( this.player.moveForward || this.player.moveBackward ) this.player.velocity.z -= this.player.direction.z * 400.0 * delta;
-					if ( this.player.moveLeft || this.player.moveRight ) this.player.velocity.x -= this.player.direction.x * 400.0 * delta;
+					if ( this.player.moveForward || this.player.moveBackward ) {
+						this.player.velocity.z -= this.player.direction.z * 1000.0 * delta;
+					}
+					if ( this.player.isRun ) {
+						this.player.velocity.z -= this.player.direction.z * 20.0;
+					}
+					if ( this.player.moveLeft || this.player.moveRight ) {
+						this.player.velocity.x -= this.player.direction.x * 1000.0 * delta;
+					}
+					if ( this.player.isDuck ) {
+						this.player.velocity.z += this.player.direction.z * 10.0;
+						this.player.velocity.x += this.player.direction.x * 10.0;
+					}
+
 					this.controls.getObject().translateX( this.player.velocity.x * delta );
 					this.controls.getObject().translateY( this.player.velocity.y * delta );
 					this.controls.getObject().translateZ( this.player.velocity.z * delta );
-					if ( this.controls.getObject().position.y < 10 ) {
+					if ( this.controls.getObject().position.y < 20 ) {
 						this.player.velocity.y = 0;
-						this.controls.getObject().position.y = 10;
-						this.player.canJump = true;
+						this.controls.getObject().position.y = 20;
+						this.player.isJump = false;
 					}
+
+					if ( this.player.isDuck ) {
+						this.controls.getObject().position.y = 10;
+					}
+
 					this.prevTime = time;
 
+					// отладка персонажа. Обновляем 10 раз в секунду
+					if (this.frame%6 === 0 || !document.getElementById('info').textContent) {
+						var playerInfo = Object.assign({}, this.player);
+						playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
+						playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
+						playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
+						delete(playerInfo.direction);
+						document.getElementById('info').textContent = JSON.stringify(playerInfo);
+					}
+
+					this.stats.update();
 					this.renderer.render( this.scene, this.camera );
 				}
 			}
 
 			let world = new World();
+
+			// добавляем пол, небо, солнце
+			world.objects.push(buildMosaicFloor());
+			let sun = buildSun();
+			world.objects.push(buildSky(sun));
+			world.objects.push(sun);
+
 			world.init().then(() => {
 				update();
 			});
