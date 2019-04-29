@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e050f8f5-4f21-4a7b-bcb3-9afc819f53ed" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/test.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shooter.html" beforeDir="false" afterPath="$PROJECT_DIR$/shooter.html" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -12,22 +12,18 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/shooter.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="585">
-              <caret line="319" column="29" lean-forward="true" selection-start-line="319" selection-start-column="29" selection-end-line="319" selection-end-column="29" />
+            <state relative-caret-position="180">
+              <caret line="48" column="8" lean-forward="true" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="8" />
               <folding>
                 <element signature="n#head#0;n#html#0;n#!!top" />
-                <element signature="e#1220#2320#0" />
-                <element signature="e#2344#2589#0" />
-                <element signature="e#2616#3752#0" />
-                <element signature="e#3863#9928#0" />
-                <element signature="e#4901#5617#0" />
-                <element signature="e#5654#6255#0" />
-                <element signature="e#7127#7541#0" />
-                <element signature="e#7572#9923#0" />
+                <element signature="e#2565#2839#0" />
+                <element signature="e#2868#4119#0" />
+                <element signature="e#6489#7363#0" />
+                <element signature="e#7400#7608#0" />
               </folding>
             </state>
           </provider>
@@ -45,6 +41,8 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>crossFadeControls</find>
+      <find>container</find>
+      <find>raycaster</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -54,7 +52,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/test.html" />
+        <option value="$PROJECT_DIR$/js/perlin-noise-simplex.js" />
         <option value="$PROJECT_DIR$/shooter.html" />
+        <option value="$PROJECT_DIR$/js/Perlin.js" />
       </list>
     </option>
   </component>
@@ -79,7 +79,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -87,10 +86,16 @@
               <item name="3djs" type="b2602c69:ProjectViewProjectNode" />
               <item name="3djs" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="3djs" type="b2602c69:ProjectViewProjectNode" />
+              <item name="3djs" type="462c0819:PsiDirectoryNode" />
+              <item name="js" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -124,25 +129,21 @@
       <option name="presentableId" value="Default" />
       <updated>1556467533579</updated>
       <workItem from="1556467534731" duration="964000" />
+      <workItem from="1556556690971" duration="3000" />
+      <workItem from="1556556718948" duration="4403000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="964000" />
+    <option name="totallyTimeSpent" value="5416000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1869" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2495886" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25507405" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="LuaCheck" />
-      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Database Changes" />
-      <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -150,10 +151,16 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="right" id="Database" />
+      <window_info anchor="bottom" id="LuaCheck" order="7" />
+      <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="9" />
+      <window_info anchor="bottom" id="Database Changes" order="10" />
+      <window_info anchor="bottom" id="Terminal" order="11" />
+      <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -170,20 +177,40 @@
     <entry file="file://$PROJECT_DIR$/favicon.ico">
       <provider selected="true" editor-type-id="images" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="5" selection-start-column="5" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/vendor/three.min.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="178" selection-start-line="15" selection-start-column="178" selection-end-line="15" selection-end-column="178" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/Perlin.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="43" column="30" lean-forward="true" selection-start-line="43" selection-start-column="30" selection-end-line="43" selection-end-column="30" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/shooter.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="319" column="29" lean-forward="true" selection-start-line="319" selection-start-column="29" selection-end-line="319" selection-end-column="29" />
+        <state relative-caret-position="180">
+          <caret line="48" column="8" lean-forward="true" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="8" />
           <folding>
             <element signature="n#head#0;n#html#0;n#!!top" />
-            <element signature="e#1220#2320#0" />
-            <element signature="e#2344#2589#0" />
-            <element signature="e#2616#3752#0" />
-            <element signature="e#3863#9928#0" />
-            <element signature="e#4901#5617#0" />
-            <element signature="e#5654#6255#0" />
-            <element signature="e#7127#7541#0" />
-            <element signature="e#7572#9923#0" />
+            <element signature="e#2565#2839#0" />
+            <element signature="e#2868#4119#0" />
+            <element signature="e#6489#7363#0" />
+            <element signature="e#7400#7608#0" />
           </folding>
         </state>
       </provider>

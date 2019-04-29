@@ -44,29 +44,46 @@
 <script src="js/utils/BufferGeometryUtils.js"></script>
 <script src="js/loaders/GLTFLoader.js"></script>
 
+<script src="js/Perlin.js"></script>
+
 <script>
     // билдеры объектов
     function buildMosaicFloor() {
-        var floorGeometry = new THREE.PlaneBufferGeometry(2000, 2000, 100, 100);
+        var perlin = new Perlin();
+
+        // сглаживание
+        var smoothing = 200;
+        var peak = 10;
+
+        var floorGeometry = new THREE.PlaneBufferGeometry(2000, 2000, 200, 200);
         floorGeometry.rotateX(-Math.PI / 2);
+
+        // позиционируем полигоны геометрии
         var position = floorGeometry.attributes.position;
+
+        position.needsUpdate = true;
+
         var vertex = new THREE.Vector3();
-        var color = new THREE.Color();
         for (var i = 0, l = position.count; i < l; i++) {
             vertex.fromBufferAttribute(position, i);
-            vertex.x += Math.random() * 20 - 10;
-            vertex.y += Math.random() * 2;
-            vertex.z += Math.random() * 20 - 10;
+            // чуть рандомим по высоте
+            vertex.y = peak * perlin.noise(vertex.x/smoothing, vertex.z/smoothing);
+
             position.setXYZ(i, vertex.x, vertex.y, vertex.z);
         }
         floorGeometry = floorGeometry.toNonIndexed();
+
+        // раскрашиваем полигоны геометрии
         position = floorGeometry.attributes.position;
+        var color = new THREE.Color();
         var colors = [];
         for (var i = 0, l = position.count; i < l; i++) {
-            color.setHSL(Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75);
+            color.setRGB(Math.random() * 0.5, Math.random() * 1.25, Math.random() * 0.25);
             colors.push(color.r, color.g, color.b);
         }
         floorGeometry.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        floorGeometry.computeVertexNormals();
+
         var floorMaterial = new THREE.MeshBasicMaterial({vertexColors: THREE.VertexColors});
         return new THREE.Mesh(floorGeometry, floorMaterial);
     }
@@ -235,7 +252,6 @@
 
         this.init = () => {
             for (let i in this.objects) {
-                // console.log(this.objects[i]);
                 this.scene.add(this.objects[i]);
             }
 
@@ -246,7 +262,6 @@
                 }
 
                 console.log('World init');
-                // когда всё загрузится
                 resolve();
             });
         };
@@ -264,15 +279,20 @@
             this.player.direction.z = Number(this.player.moveForward) - Number(this.player.moveBackward);
             this.player.direction.x = Number(this.player.moveLeft) - Number(this.player.moveRight);
             this.player.direction.normalize();
+
+            // wasd перемещения
             if (this.player.moveForward || this.player.moveBackward) {
-                this.player.velocity.z -= this.player.direction.z * 1000.0 * delta;
+                this.player.velocity.z -= this.player.direction.z * 1500.0 * delta;
             }
+            if (this.player.moveLeft || this.player.moveRight) {
+                this.player.velocity.x -= this.player.direction.x * 1500.0 * delta;
+            }
+
+            // бег ускоряет движение ВПЕРЁД
             if (this.player.isRun) {
                 this.player.velocity.z -= this.player.direction.z * 20.0;
             }
-            if (this.player.moveLeft || this.player.moveRight) {
-                this.player.velocity.x -= this.player.direction.x * 1000.0 * delta;
-            }
+            // на кортах медленее в ЛЮБОМ НАПРАВЛЕНИИ
             if (this.player.isDuck) {
                 this.player.velocity.z += this.player.direction.z * 10.0;
                 this.player.velocity.x += this.player.direction.x * 10.0;
