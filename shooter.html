@@ -53,7 +53,7 @@
 
         // сглаживание
         var smoothing = 200;
-        var peak = 10;
+        var peak = 20;
         var scale = 100;
 
         var floorGeometry = new THREE.PlaneBufferGeometry(10 * scale, 10 * scale, scale, scale);
@@ -90,17 +90,14 @@
     }
 
     function buildSun() {
-        var sunSphere = new THREE.Mesh(
+        return new THREE.Mesh(
             new THREE.SphereBufferGeometry(20000, 16, 8),
             new THREE.MeshBasicMaterial({color: 0xffffff})
         );
-        sunSphere.position.y = 700000;
-        sunSphere.visible = true;
-        return sunSphere;
     }
 
     function buildSky(sun) {
-        var effectController = {
+        let effectController = {
             turbidity: 10,
             rayleigh: 2,
             mieCoefficient: 0.005,
@@ -111,19 +108,19 @@
             sun: true
         };
 
-        sky = new THREE.Sky();
+        let sky = new THREE.Sky();
         sky.scale.setScalar(450000);
 
-        var uniforms = sky.material.uniforms;
+        let uniforms = sky.material.uniforms;
         uniforms.turbidity.value = effectController.turbidity;
         uniforms.rayleigh.value = effectController.rayleigh;
         uniforms.luminance.value = effectController.luminance;
         uniforms.mieCoefficient.value = effectController.mieCoefficient;
         uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
 
-        var theta = Math.PI * (effectController.inclination - 0.5);
-        var phi = 2 * Math.PI * (effectController.azimuth - 0.5);
-        var distance = 400000;
+        let theta = Math.PI * (effectController.inclination - 0.5);
+        let phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+        let distance = 400000;
 
         sun.position.x = distance * Math.cos(phi);
         sun.position.y = distance * Math.sin(phi) * Math.sin(theta);
@@ -144,7 +141,7 @@
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
         this.renderer = new THREE.WebGLRenderer({antialias: true});
-        this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
+        this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(-1, -1, 0), 0, 10);
         this.stats = new Stats();
         this.controls = new THREE.PointerLockControls(this.camera);
 
@@ -165,6 +162,9 @@
             velocity: new THREE.Vector3(),
             direction: new THREE.Vector3(),
         };
+
+        // куда смотрим
+        this.crosshair = new THREE.Vector2(window.innerWidth/2, window.innerHeight/2);
 
         // обработки событий
         var onKeyDown = (event) => {
@@ -325,6 +325,16 @@
             }
 
             this.stats.update();
+
+            // получаем объекты, на которые смотрим
+            this.raycaster.setFromCamera( this.crosshair, this.camera );
+            let intersects = this.raycaster.intersectObjects( this.scene.children );
+
+            if (intersects.length > 0) {
+                console.log(intersects);
+                console.log(this.scene.children);
+            }
+
             this.renderer.render(this.scene, this.camera);
         }
     }
@@ -336,14 +346,13 @@
     let sun = buildSun();
     world.objects.push(floor);
     world.objects.push(buildSky(sun));
-    world.objects.push(sun);
 
     world.init().then(() => {
-        update();
+        render();
     });
 
-    function update() {
-        requestAnimationFrame(update);
+    function render() {
+        requestAnimationFrame(render);
         world.update();
     }
 </script>

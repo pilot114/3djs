@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+<script src="js/vendor/three.min.js"></script>
+
+<script>
+    // рендер - webGL или webGL2
+    // renderer.capabilities - инфа об основных атрибутах рендера
+    // renderer.info - инфа об динамических атрибутах (статистика)
+    // Содержит разные низкоуровневые настройки, связанные с буферами и WebGl API,
+    // а также всё, что связано с отрисовкой
+    // подробнее - https://threejs.org/docs/#api/en/renderers/WebGLRenderer
+    let renderer = null;
+    if (true) {
+        let canvas = document.createElement('canvas');
+        let context = canvas.getContext('webgl2');
+        renderer = new THREE.WebGLRenderer({canvas: canvas, context: context});
+    } else {
+        renderer = new THREE.WebGLRenderer();
+    }
+
+    // сцена - контейнер (Object3D) для всех остальных Object3D элементов (меши, камеры, фонари)
+    // к сцене можно добавить туман (Fog - линейный, FogExp2 - экспоненциальный)
+    // overrideMaterial - переопределить все материалы в сцене
+    // autoUpdate - установив в false, можно самому решать, когда пересчитывать сцену
+    // background - объект фона
+    // toJSON() - выгрузка всей сцены в JSON
+    let scene = new THREE.Scene();
+
+    // камера - откуда мы смотрим на сцену
+    // PerspectiveCamera - человеческий глаз
+    // OrthographicCamera - тоже, но без перспективы
+    // StereoCamera - 2 PerspectiveCamera (для эффектов)
+    // CubeCamera - 6 PerspectiveCamera (для работы с отражениями) https://medium.com/@soffritti.pierfrancesco/dynamic-reflections-in-three-js-2d46f3378fc4
+    // также есть ArrayCamera (работа с набором камер как с одной)
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // добавляем объект - куб
+    let geometry = new THREE.BoxGeometry(1, 1, 1);
+    let material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+    let cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    camera.position.z = 5;
+
+    function render() {
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+    }
+
+    render();
+</script>
+</body>
+</html>
