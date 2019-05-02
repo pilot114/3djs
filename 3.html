@@ -84,6 +84,18 @@
     // у практически всех объектов three.js есть метод dispose
     // Он очищает ресурсы, которые уже не нужны
     // посмотреть, что сейчас лежит в памяти можно через WebGLRenderer.info
+
+    // каждый объект хранит матрицу, модифицируя которую можно менять его геометрию
+    // если объект статический и нужно только иногда менять его состояние
+    // следует вручную управлять его обновлением:
+    // object.matrixAutoUpdate = false;
+    // object.position.copy(start_position);
+    // object.quaternion.copy(quaternion);
+    // object.updateMatrix();
+    // или можно менять специальными методами (тогда updateMatrix вызывать не нужно):
+    // object.matrixAutoUpdate = false;
+    // object.matrix.setRotationFromQuaternion(quaternion);
+    // object.matrix.setPosition(start_position);
 </script>
 </body>
 </html>

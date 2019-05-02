@@ -32,22 +32,13 @@
 <div id="container"></div>
 <div id="info"></div>
 <script src="js/vendor/three.min.js"></script>
-<script src="js/vendor/ImprovedNoise.js"></script>
-<script src="js/vendor/WebGL.js"></script>
 <script src="js/vendor/stats.min.js"></script>
 <script src="js/vendor/dat.gui.min.js"></script>
-
 <script src="js/controls/PointerLockControls.js"></script>
-
 <script src="js/objects/Sky.js"></script>
-
-<script src="js/utils/BufferGeometryUtils.js"></script>
-<script src="js/loaders/GLTFLoader.js"></script>
-
 <script src="js/Perlin.js"></script>
 
 <script>
-    // билдеры объектов
     function buildMosaicFloor() {
         var perlin = new Perlin();
 
@@ -80,13 +71,18 @@
         var colors = [];
         for (var i = 0, l = position.count; i < l; i++) {
             color.setRGB(Math.random() * 0.5, Math.random() * 1.25, Math.random() * 0.25);
+            // color.setRGB(0.5, 1.25, 0.25);
             colors.push(color.r, color.g, color.b);
         }
         floorGeometry.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         floorGeometry.computeVertexNormals();
 
         var floorMaterial = new THREE.MeshBasicMaterial({vertexColors: THREE.VertexColors});
-        return new THREE.Mesh(floorGeometry, floorMaterial);
+
+        let mesh = new THREE.Mesh(floorGeometry, floorMaterial);
+        mesh.name = 'surface';
+
+        return mesh;
     }
 
     function buildSun() {
@@ -257,11 +253,6 @@
             }
 
             return new Promise(function (resolve, reject) {
-                // Проверка что WebGL работает правильно
-                if (WEBGL.isWebGLAvailable() === false) {
-                    reject("WEBGL не поддерживается")
-                }
-
                 console.log('World init');
                 resolve();
             });
@@ -354,6 +345,23 @@
     function render() {
         requestAnimationFrame(render);
         world.update();
+
+        if (world.renderer.info.render.frame % 10 === 0) {
+            position = world.scene.getObjectByName('surface').geometry.attributes.position;
+            position.needsUpdate = true;
+
+            var perlin = new Perlin();
+            var vertex = new THREE.Vector3();
+            for (var i = 0, l = position.count; i < l; i++) {
+                vertex.fromBufferAttribute(position, i);
+                if (i % 6 === 0) {
+                    // vertex.fromBufferAttribute(position, i);
+                    // vertex.y = vertex.y - 1;
+                }
+
+                position.setXYZ(i, vertex.x, vertex.y, vertex.z);
+            }
+        }
     }
 </script>
 </body>
