@@ -36,7 +36,7 @@
 <script src="js/vendor/dat.gui.min.js"></script>
 <script src="js/controls/PointerLockControls.js"></script>
 <script src="js/objects/Sky.js"></script>
-<script src="js/Perlin.js"></script>
+<script src="js/vendor/Perlin.js"></script>
 
 <script>
     function buildMosaicFloor() {
@@ -349,8 +349,6 @@
         if (world.renderer.info.render.frame % 10 === 0) {
             position = world.scene.getObjectByName('surface').geometry.attributes.position;
             position.needsUpdate = true;
-
-            var perlin = new Perlin();
             var vertex = new THREE.Vector3();
             for (var i = 0, l = position.count; i < l; i++) {
                 vertex.fromBufferAttribute(position, i);
