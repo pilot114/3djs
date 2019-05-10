@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - geometry - minecraft</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            color: #61443e;
+            font-family: Monospace;
+            font-size: 13px;
+            text-align: center;
+            background-color: #bfd1e5;
+            margin: 0px;
+            overflow: hidden;
+        }
+
+        #info {
+            position: absolute;
+            top: 0;
+            left: 80px;
+            text-align: center;
+            z-index: 100;
+            display: block;
+            background-color: white;
+            padding: 1em;
+            height: 3em;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div id="info"></div>
+<script src="../js/vendor/three.min.js"></script>
+<script src="../js/vendor/stats.min.js"></script>
+<script src="../js/vendor/dat.gui.min.js"></script>
+<script src="../js/controls/PointerLockControls.js"></script>
+<script src="../js/objects/Sky.js"></script>
+<script src="../js/vendor/Perlin.js"></script>
+
+<script>
+    function buildMosaicFloor() {
+        var perlin = new Perlin();
+
+        // сглаживание
+        var smoothing = 200;
+        var peak = 20;
+        var scale = 100;
+
+        var floorGeometry = new THREE.PlaneBufferGeometry(10 * scale, 10 * scale, scale, scale);
+        floorGeometry.rotateX(-Math.PI / 2);
+
+        // позиционируем полигоны геометрии
+        var position = floorGeometry.attributes.position;
+
+        position.needsUpdate = true;
+
+        var vertex = new THREE.Vector3();
+        for (var i = 0, l = position.count; i < l; i++) {
+            vertex.fromBufferAttribute(position, i);
+            // чуть рандомим по высоте
+            vertex.y = peak * perlin.noise(vertex.x / smoothing, vertex.z / smoothing);
+
+            position.setXYZ(i, vertex.x, vertex.y, vertex.z);
+        }
+        floorGeometry = floorGeometry.toNonIndexed();
+
+        // раскрашиваем полигоны геометрии
+        position = floorGeometry.attributes.position;
+        var color = new THREE.Color();
+        var colors = [];
+        for (var i = 0, l = position.count; i < l; i++) {
+            color.setRGB(Math.random() * 0.5, Math.random() * 1.25, Math.random() * 0.25);
+            // color.setRGB(0.5, 1.25, 0.25);
+            colors.push(color.r, color.g, color.b);
+        }
+        floorGeometry.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        floorGeometry.computeVertexNormals();
+
+        var floorMaterial = new THREE.MeshBasicMaterial({vertexColors: THREE.VertexColors});
+
+        let mesh = new THREE.Mesh(floorGeometry, floorMaterial);
+        mesh.name = 'surface';
+
+        return mesh;
+    }
+
+    function buildSun() {
+        return new THREE.Mesh(
+            new THREE.SphereBufferGeometry(20000, 16, 8),
+            new THREE.MeshBasicMaterial({color: 0xffffff})
+        );
+    }
+
+    function buildSky(sun) {
+        let effectController = {
+            turbidity: 10,
+            rayleigh: 2,
+            mieCoefficient: 0.005,
+            mieDirectionalG: 0.8,
+            luminance: 1,
+            inclination: 0.48, // elevation / inclination
+            azimuth: 0.25, // Facing front,
+            sun: true
+        };
+
+        let sky = new THREE.Sky();
+        sky.scale.setScalar(450000);
+
+        let uniforms = sky.material.uniforms;
+        uniforms.turbidity.value = effectController.turbidity;
+        uniforms.rayleigh.value = effectController.rayleigh;
+        uniforms.luminance.value = effectController.luminance;
+        uniforms.mieCoefficient.value = effectController.mieCoefficient;
+        uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
+
+        let theta = Math.PI * (effectController.inclination - 0.5);
+        let phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+        let distance = 400000;
+
+        sun.position.x = distance * Math.cos(phi);
+        sun.position.y = distance * Math.sin(phi) * Math.sin(theta);
+        sun.position.z = distance * Math.sin(phi) * Math.cos(theta);
+
+        sun.visible = effectController.sun;
+
+        uniforms.sunPosition.value.copy(sun.position);
+
+        return sky;
+    }
+
+    // стандартное поведение для 3d мира с физикой и камерой от первого лица + управление
+    function World() {
+        console.log('World create');
+
+        this.container = document.getElementById('container');
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
+        this.renderer = new THREE.WebGLRenderer({antialias: true});
+        this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(-1, -1, 0), 0, 10);
+        this.stats = new Stats();
+        this.controls = new THREE.PointerLockControls(this.camera);
+
+        this.clock = new THREE.Clock();
+        this.prevTime = performance.now();
+
+        this.objects = [];
+        this.frame = 0;
+
+        this.player = {
+            moveForward: false,
+            moveBackward: false,
+            moveLeft: false,
+            moveRight: false,
+            isJump: false,
+            isRun: false,
+            isDuck: false,
+            velocity: new THREE.Vector3(),
+            direction: new THREE.Vector3(),
+        };
+
+        // куда смотрим
+        this.crosshair = new THREE.Vector2(window.innerWidth/2, window.innerHeight/2);
+
+        // обработки событий
+        var onKeyDown = (event) => {
+            if (event.shiftKey && this.player.moveForward) {
+                this.player.isRun = true;
+            }
+
+            switch (event.keyCode) {
+                case 38: // up
+                case 87: // w
+                    this.player.moveForward = true;
+                    break;
+                case 37: // left
+                case 65: // a
+                    this.player.moveLeft = true;
+                    break;
+                case 40: // down
+                case 83: // s
+                    this.player.moveBackward = true;
+                    break;
+                case 39: // right
+                case 68: // d
+                    this.player.moveRight = true;
+                    break;
+                case 32: // space
+                    if (this.player.isJump === false) this.player.velocity.y += 350;
+                    this.player.isJump = true;
+                    break;
+                case 67: // c
+                    if (this.player.isJump === false) {
+                        this.player.isDuck = true;
+                        this.player.isRun = false;
+                    }
+                    break;
+            }
+        };
+        var onKeyUp = (event) => {
+            switch (event.keyCode) {
+                case 38: // up
+                case 87: // w
+                    this.player.moveForward = false;
+                    this.player.isRun = false;
+                    break;
+                case 37: // left
+                case 65: // a
+                    this.player.moveLeft = false;
+                    break;
+                case 40: // down
+                case 83: // s
+                    this.player.moveBackward = false;
+                    break;
+                case 39: // right
+                case 68: // d
+                    this.player.moveRight = false;
+                    break;
+                case 67: // c
+                    this.player.isDuck = false;
+                    break;
+            }
+
+            if (!event.shiftKey) {
+                this.player.isRun = false;
+            }
+        };
+        var onWindowResize = () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        document.addEventListener('keydown', onKeyDown, false);
+        document.addEventListener('keyup', onKeyUp, false);
+        window.addEventListener('resize', onWindowResize, false);
+
+        this.scene.add(this.controls.getObject());
+
+        // добавляем рендер
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.container.innerHTML = "";
+        this.container.appendChild(this.renderer.domElement);
+        this.container.appendChild(this.stats.dom);
+
+        this.container.addEventListener('click', () => {
+            this.controls.lock();
+        }, false);
+
+        this.init = () => {
+            for (let i in this.objects) {
+                this.scene.add(this.objects[i]);
+            }
+
+            return new Promise(function (resolve, reject) {
+                console.log('World init');
+                resolve();
+            });
+        };
+
+        this.update = function () {
+            this.frame += 1;
+
+            this.raycaster.ray.origin.copy(this.controls.getObject().position);
+            this.raycaster.ray.origin.y -= 10;
+            var time = performance.now();
+            var delta = (time - this.prevTime) / 1000;
+            this.player.velocity.x -= this.player.velocity.x * 10.0 * delta;
+            this.player.velocity.z -= this.player.velocity.z * 10.0 * delta;
+            this.player.velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+            this.player.direction.z = Number(this.player.moveForward) - Number(this.player.moveBackward);
+            this.player.direction.x = Number(this.player.moveLeft) - Number(this.player.moveRight);
+            this.player.direction.normalize();
+
+            // wasd перемещения
+            if (this.player.moveForward || this.player.moveBackward) {
+                this.player.velocity.z -= this.player.direction.z * 1500.0 * delta;
+            }
+            if (this.player.moveLeft || this.player.moveRight) {
+                this.player.velocity.x -= this.player.direction.x * 1500.0 * delta;
+            }
+
+            // бег ускоряет движение ВПЕРЁД
+            if (this.player.isRun) {
+                this.player.velocity.z -= this.player.direction.z * 20.0;
+            }
+            // на кортах медленее в ЛЮБОМ НАПРАВЛЕНИИ
+            if (this.player.isDuck) {
+                this.player.velocity.z += this.player.direction.z * 10.0;
+                this.player.velocity.x += this.player.direction.x * 10.0;
+            }
+
+            this.controls.getObject().translateX(this.player.velocity.x * delta);
+            this.controls.getObject().translateY(this.player.velocity.y * delta);
+            this.controls.getObject().translateZ(this.player.velocity.z * delta);
+            if (this.controls.getObject().position.y < 20) {
+                this.player.velocity.y = 0;
+                this.controls.getObject().position.y = 20;
+                this.player.isJump = false;
+            }
+
+            if (this.player.isDuck) {
+                this.controls.getObject().position.y = 10;
+            }
+
+            this.prevTime = time;
+
+            // отладка персонажа. Обновляем 10 раз в секунду
+            if (this.frame % 6 === 0 || !document.getElementById('info').textContent) {
+                var playerInfo = Object.assign({}, this.player);
+                playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
+                playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
+                playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
+                delete (playerInfo.direction);
+                document.getElementById('info').textContent = JSON.stringify(playerInfo);
+            }
+
+            this.stats.update();
+
+            // получаем объекты, на которые смотрим
+            this.raycaster.setFromCamera( this.crosshair, this.camera );
+            let intersects = this.raycaster.intersectObjects( this.scene.children );
+
+            if (intersects.length > 0) {
+                console.log(intersects);
+                console.log(this.scene.children);
+            }
+
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    let world = new World();
+
+    // добавляем пол, небо, солнце
+    let floor = buildMosaicFloor();
+    let sun = buildSun();
+    world.objects.push(floor);
+    world.objects.push(buildSky(sun));
+
+    world.init().then(() => {
+        render();
+    });
+
+    function render() {
+        requestAnimationFrame(render);
+        world.update();
+
+        if (world.renderer.info.render.frame % 10 === 0) {
+            position = world.scene.getObjectByName('surface').geometry.attributes.position;
+            position.needsUpdate = true;
+            var vertex = new THREE.Vector3();
+            for (var i = 0, l = position.count; i < l; i++) {
+                vertex.fromBufferAttribute(position, i);
+                if (i % 6 === 0) {
+                    // vertex.fromBufferAttribute(position, i);
+                    // vertex.y = vertex.y - 1;
+                }
+
+                position.setXYZ(i, vertex.x, vertex.y, vertex.z);
+            }
+        }
+    }
+</script>
+</body>
+</html>

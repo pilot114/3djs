@@ -1,0 +1,6 @@
+FROM pilot114/base-workspace72
+
+WORKDIR /app
+
+EXPOSE 8080
+EXPOSE 8000
