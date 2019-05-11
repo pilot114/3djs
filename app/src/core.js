@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 
 /**
  *  Предустановки:
@@ -29,6 +30,7 @@ function Core(config) {
     let context = canvas.getContext('webgl2');
     this.renderer = new THREE.WebGLRenderer({canvas: canvas, context: context});
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.raycaster = new THREE.Raycaster();
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1001);
@@ -38,6 +40,21 @@ function Core(config) {
     this.scene.add(this.light);
 
     this.loadModels = {};
+
+    // позиция курсора
+    this.pickPosition = {x:0, y:0};
+
+    // настройки
+    if (this.config.grid) {
+        const gridHelper = new THREE.GridHelper(10, 10);
+        gridHelper.position.y = -1;
+        this.scene.add(gridHelper);
+    }
+
+    // управление камерой
+    this.controls = new OrbitControls(this.camera);
+    this.camera.position.set(3, 3, 3);
+    this.controls.update();
 
     window.addEventListener('resize', () => {
         this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -58,7 +75,9 @@ function Core(config) {
         }, 10);
     };
 
-    this.update = () => {
+    this.update = (time) => {
+        this.pick();
+        this.controls.update();
         this.tick(this.scene, this.camera);
         requestAnimationFrame(this.update);
         this.renderer.render(this.scene, this.camera);
@@ -92,6 +111,22 @@ function Core(config) {
                 this.loadModels[name[1]] = true;
             });
         });
+    };
+
+    /**
+     * тут нужно задать параметры "пика" - селектор на объекты и что с ними делаем
+     */
+    this.pick = (time) => {
+        this.raycaster.setFromCamera(this.pickPosition, this.camera);
+        const intersectedObjects = this.raycaster.intersectObjects(this.scene.children);
+
+        if (intersectedObjects.length) {
+            // тут надо кастомно выбирать объекты, которые хотим "пикать"
+            let filtered = intersectedObjects.filter(x => !(x.object instanceof THREE.GridHelper) );
+            if (filtered.length) {
+                filtered[0].object.material.emissive.setHex(0xFFFF00);
+            }
+        }
     };
 
     /**

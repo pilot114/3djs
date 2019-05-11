@@ -9,19 +9,36 @@ import {
 
 let core = new Core({
     preset: 'default',
-    enableModels: true
+    enableModels: true,
+    grid: true
 });
 
 core.init = (scene, camera) => {
-    let geometry = new BoxGeometry(1, 1, 1);
-    let material = new MeshPhongMaterial({color: 0x44aa88});
-    let cube = new Mesh(geometry, material);
-    cube.name = 'cube_1';
-    scene.add(cube);
+    const geometry2 = new BoxGeometry(1, 1, 1);
 
-    camera.position.y = 10;
-    camera.rotation.x = -90 * (Math.PI / 180);
+    function rand(min, max) {
+        if (max === undefined) {
+            max = min;
+            min = 0;
+        }
+        return min + (max - min) * Math.random();
+    }
 
+    const numObjects = 10;
+    for (let i = 0; i < numObjects; ++i) {
+        const material = new MeshPhongMaterial({
+            color: `hsl(${rand(360) | 0}, ${rand(50, 100) | 0}%, 50%)`,
+        });
+
+        const cube = new Mesh(geometry2, material);
+        scene.add(cube);
+
+        cube.position.set(rand(-20, 20), rand(-20, 20), rand(-20, 20));
+        cube.rotation.set(rand(Math.PI), rand(Math.PI), 0);
+        cube.scale.set(rand(3, 6), rand(3, 6), rand(3, 6));
+    }
+
+    /*
     core.addModel(
         ['./assets/models/gltf/scene.gltf', 'city_1'],
         new Vector3(0.01, 0.01, 0.01),
@@ -43,6 +60,7 @@ core.init = (scene, camera) => {
             }
         }
     });
+    */
 };
 
 core.tick = (scene, camera) => {
