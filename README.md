@@ -1,4 +1,5 @@
 # 3djs
 
-порты:
-8000 - dev сервер
+fix break es6 in threejs
+
+    ln -s ${PWD}/node_modules/three/examples/js ${PWD}/public/no_es6

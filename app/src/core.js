@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+// используем глобальный THREE, для не es6 файлов
+
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 
@@ -35,14 +36,28 @@ function Core(config) {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1001);
 
+    // композер эффектов
+    this.composer = new THREE.EffectComposer(this.renderer);
+    this.composer.setSize(window.innerWidth, window.innerHeight);
+
+    // эффекты, сначала пробрасываем дефолтный рендер
+    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
+
+    var effectFilm = new THREE.FilmPass(0.2, 0.325, 512, false);
+    effectFilm.renderToScreen = true;
+    this.composer.addPass(effectFilm);
+
+
     this.light = new THREE.DirectionalLight(0xFFFFFF, 1);
     this.light.position.set(0, 1000, 0);
     this.scene.add(this.light);
 
     this.loadModels = {};
 
+    this.shaders = [];
+
     // позиция курсора
-    this.pickPosition = {x:0, y:0};
+    this.pickPosition = {x: 0, y: 0};
 
     // настройки
     if (this.config.grid) {
@@ -60,6 +75,7 @@ function Core(config) {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
     }, false);
 
     this.run = () => {
@@ -73,14 +89,28 @@ function Core(config) {
                 this.update();
             }
         }, 10);
+
+        // кастомные эффекты
+        for (let i in this.shaders)  {
+            this.shaders[i].renderToScreen = true;
+            this.composer.addPass(this.shaders[i]);
+        }
     };
 
-    this.update = (time) => {
+    let clock = new THREE.Clock(); // sec
+    this.update = () => {
         this.pick();
         this.controls.update();
         this.tick(this.scene, this.camera);
+
+        // если есть эффекты, рендерим через менеджер эффектов
+        if (this.composer) {
+            this.composer.render(clock.getDelta());
+        } else {
+            this.renderer.render(this.scene, this.camera);
+        }
+
         requestAnimationFrame(this.update);
-        this.renderer.render(this.scene, this.camera);
     };
 
     /**
@@ -115,14 +145,17 @@ function Core(config) {
 
     /**
      * тут нужно задать параметры "пика" - селектор на объекты и что с ними делаем
+     *
+     * продвинутый вариант - рисовать в отдельной сцене и пикать по уникальному цвету
+     * https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
      */
-    this.pick = (time) => {
+    this.pick = () => {
         this.raycaster.setFromCamera(this.pickPosition, this.camera);
         const intersectedObjects = this.raycaster.intersectObjects(this.scene.children);
 
         if (intersectedObjects.length) {
             // тут надо кастомно выбирать объекты, которые хотим "пикать"
-            let filtered = intersectedObjects.filter(x => !(x.object instanceof THREE.GridHelper) );
+            let filtered = intersectedObjects.filter(x => !(x.object instanceof THREE.GridHelper));
             if (filtered.length) {
                 filtered[0].object.material.emissive.setHex(0xFFFF00);
             }
@@ -152,6 +185,10 @@ function Core(config) {
 
     this.dumpVec3 = (v3, precision = 3) => {
         return `${v3.x.toFixed(precision)}, ${v3.y.toFixed(precision)}, ${v3.z.toFixed(precision)}`;
+    };
+
+    this.addShader = (shader) => {
+        this.shaders.push(new THREE.ShaderPass(shader));
     }
 }
 

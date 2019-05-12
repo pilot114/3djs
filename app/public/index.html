@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1.0,user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="icon" href="/favicon.ico">
     <title>3djs</title>
     <style>
-      html, body {
-        margin: 0;
-        overflow: hidden;
-        background-color: #000;
-      }
+        html, body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
 
-      #display {
-        background-color: #000;
-      }
+        #display {
+            background-color: #000;
+        }
     </style>
-  </head>
-  <body>
-    <canvas id="display"></canvas>
-  </body>
+    <!-- пока некоторые части three.js не адаптированы под es6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+    <script src="/no_es6/postprocessing/EffectComposer.js"></script>
+    <script src="/no_es6/postprocessing/ShaderPass.js"></script>
+    <script src="/no_es6/postprocessing/RenderPass.js"></script>
+    <script src="/no_es6/postprocessing/BloomPass.js"></script>
+    <script src="/no_es6/postprocessing/FilmPass.js"></script>
+    <script src="/no_es6/shaders/CopyShader.js"></script>
+    <script src="/no_es6/shaders/ConvolutionShader.js"></script>
+    <script src="/no_es6/shaders/FilmShader.js"></script>
+</head>
+<body>
+<canvas id="display"></canvas>
+</body>
 </html>
