@@ -2,6 +2,7 @@
 
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
+import * as Stats from 'stats.js';
 
 /**
  *  Предустановки:
@@ -23,6 +24,10 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
  *  В качестве физического движка используется oimo
  *
  *  Подгрузка ассетов - в json формате
+ *
+ *   Пресеты
+ *   default - орбит контрол (для демок)
+ *   fps (first person shooter) - вид от первого лица, wasd управление
  */
 function Core(config) {
     this.config = config;
@@ -43,11 +48,6 @@ function Core(config) {
     // эффекты, сначала пробрасываем дефолтный рендер
     this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
 
-    var effectFilm = new THREE.FilmPass(0.2, 0.325, 512, false);
-    effectFilm.renderToScreen = true;
-    this.composer.addPass(effectFilm);
-
-
     this.light = new THREE.DirectionalLight(0xFFFFFF, 1);
     this.light.position.set(0, 1000, 0);
     this.scene.add(this.light);
@@ -65,11 +65,106 @@ function Core(config) {
         gridHelper.position.y = -1;
         this.scene.add(gridHelper);
     }
+    if (this.config.stats) {
+        this.stats = new Stats();
+        document.body.appendChild( this.stats.dom );
+    }
 
-    // управление камерой
-    this.controls = new OrbitControls(this.camera);
-    this.camera.position.set(3, 3, 3);
-    this.controls.update();
+    // управление камерой - вынести в модули
+    if (this.config.preset === 'fps') {
+        this.controls = new THREE.PointerLockControls(this.camera);
+        this.scene.add(this.controls.getObject());
+        document.addEventListener('click', () => {
+            this.controls.lock();
+        }, false);
+
+        this.player = {
+            moveForward: false,
+            moveBackward: false,
+            moveLeft: false,
+            moveRight: false,
+            isJump: false,
+            isRun: false,
+            isDuck: false,
+            velocity: new THREE.Vector3(),
+            direction: new THREE.Vector3(),
+        };
+
+        // куда смотрим
+        this.crosshair = new THREE.Vector2(window.innerWidth/2, window.innerHeight/2);
+
+        // обработки событий
+        var onKeyDown = (event) => {
+            if (event.shiftKey && this.player.moveForward) {
+                this.player.isRun = true;
+            }
+
+            switch (event.keyCode) {
+                case 38: // up
+                case 87: // w
+                    this.player.moveForward = true;
+                    break;
+                case 37: // left
+                case 65: // a
+                    this.player.moveLeft = true;
+                    break;
+                case 40: // down
+                case 83: // s
+                    this.player.moveBackward = true;
+                    break;
+                case 39: // right
+                case 68: // d
+                    this.player.moveRight = true;
+                    break;
+                case 32: // space
+                    if (this.player.isJump === false) this.player.velocity.y += 350;
+                    this.player.isJump = true;
+                    break;
+                case 67: // c
+                    if (this.player.isJump === false) {
+                        this.player.isDuck = true;
+                        this.player.isRun = false;
+                    }
+                    break;
+            }
+        };
+        var onKeyUp = (event) => {
+            switch (event.keyCode) {
+                case 38: // up
+                case 87: // w
+                    this.player.moveForward = false;
+                    this.player.isRun = false;
+                    break;
+                case 37: // left
+                case 65: // a
+                    this.player.moveLeft = false;
+                    break;
+                case 40: // down
+                case 83: // s
+                    this.player.moveBackward = false;
+                    break;
+                case 39: // right
+                case 68: // d
+                    this.player.moveRight = false;
+                    break;
+                case 67: // c
+                    this.player.isDuck = false;
+                    break;
+            }
+
+            if (!event.shiftKey) {
+                this.player.isRun = false;
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown, false);
+        document.addEventListener('keyup', onKeyUp, false);
+
+    }  else {
+        this.controls = new OrbitControls(this.camera);
+        this.camera.position.set(3, 2, 3);
+        this.controls.update();
+    }
 
     window.addEventListener('resize', () => {
         this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -77,6 +172,9 @@ function Core(config) {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.composer.setSize(window.innerWidth, window.innerHeight);
     }, false);
+
+    this.init = (scene, camera) => {};
+    this.tick = (scene, camera) => {};
 
     this.run = () => {
         this.init(this.scene, this.camera);
@@ -98,16 +196,28 @@ function Core(config) {
     };
 
     let clock = new THREE.Clock(); // sec
+    let delta = 0;
+
     this.update = () => {
+        delta = clock.getDelta();
+
         this.pick();
-        this.controls.update();
         this.tick(this.scene, this.camera);
 
         // если есть эффекты, рендерим через менеджер эффектов
         if (this.composer) {
-            this.composer.render(clock.getDelta());
+            this.composer.render(delta);
         } else {
             this.renderer.render(this.scene, this.camera);
+        }
+
+        if (this.stats) {
+            this.stats.update();
+        }
+
+        // обработка физики персонажа
+        if (this.player) {
+            this.playerUpdate(delta/1000);
         }
 
         requestAnimationFrame(this.update);
@@ -116,6 +226,55 @@ function Core(config) {
     /**
      * helpers
      */
+    this.playerUpdate = (delta) => {
+        this.player.velocity.x -= this.player.velocity.x * 10.0 * delta;
+        this.player.velocity.z -= this.player.velocity.z * 10.0 * delta;
+        this.player.velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+        this.player.direction.z = Number(this.player.moveForward) - Number(this.player.moveBackward);
+        this.player.direction.x = Number(this.player.moveLeft) - Number(this.player.moveRight);
+        this.player.direction.normalize();
+
+        // wasd перемещения
+        if (this.player.moveForward || this.player.moveBackward) {
+            this.player.velocity.z -= this.player.direction.z * 1500.0 * delta;
+        }
+        if (this.player.moveLeft || this.player.moveRight) {
+            this.player.velocity.x -= this.player.direction.x * 1500.0 * delta;
+        }
+
+        // бег ускоряет движение ВПЕРЁД
+        if (this.player.isRun) {
+            this.player.velocity.z -= this.player.direction.z * 20.0;
+        }
+        // на кортах медленее в ЛЮБОМ НАПРАВЛЕНИИ
+        if (this.player.isDuck) {
+            this.player.velocity.z += this.player.direction.z * 10.0;
+            this.player.velocity.x += this.player.direction.x * 10.0;
+        }
+
+        this.controls.getObject().translateX(this.player.velocity.x * delta);
+        this.controls.getObject().translateY(this.player.velocity.y * delta);
+        this.controls.getObject().translateZ(this.player.velocity.z * delta);
+        if (this.controls.getObject().position.y < 20) {
+            this.player.velocity.y = 0;
+            this.controls.getObject().position.y = 20;
+            this.player.isJump = false;
+        }
+
+        if (this.player.isDuck) {
+            this.controls.getObject().position.y = 10;
+        }
+
+        if (this.renderer.info.render.frame % 6 === 0) {
+            var playerInfo = Object.assign({}, this.player);
+            playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
+            playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
+            playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
+            delete (playerInfo.direction);
+            console.log(JSON.stringify(playerInfo));
+        }
+    };
+
     this.addModel = (name, scale, position) => {
         this.loadModels[name[1]] = false;
 

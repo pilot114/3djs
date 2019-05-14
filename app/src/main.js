@@ -8,9 +8,9 @@ import {
 } from 'three';
 
 let core = new Core({
-    preset: 'default',
-    enableModels: true,
-    grid: true
+    preset: 'fps',
+    grid: true,
+    stats: true
 });
 
 core.init = (scene, camera) => {

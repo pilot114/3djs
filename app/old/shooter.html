@@ -25,6 +25,7 @@
             background-color: white;
             padding: 1em;
             height: 3em;
+            opacity: .3;
         }
     </style>
 </head>
@@ -32,7 +33,6 @@
 <div id="container"></div>
 <div id="info"></div>
 <script src="../js/vendor/three.min.js"></script>
-<script src="../js/vendor/stats.min.js"></script>
 <script src="../js/vendor/dat.gui.min.js"></script>
 <script src="../js/controls/PointerLockControls.js"></script>
 <script src="../js/objects/Sky.js"></script>
@@ -137,11 +137,8 @@
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
         this.renderer = new THREE.WebGLRenderer({antialias: true});
-        this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(-1, -1, 0), 0, 10);
-        this.stats = new Stats();
         this.controls = new THREE.PointerLockControls(this.camera);
 
-        this.clock = new THREE.Clock();
         this.prevTime = performance.now();
 
         this.objects = [];
@@ -241,7 +238,6 @@
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.container.innerHTML = "";
         this.container.appendChild(this.renderer.domElement);
-        this.container.appendChild(this.stats.dom);
 
         this.container.addEventListener('click', () => {
             this.controls.lock();
@@ -261,8 +257,6 @@
         this.update = function () {
             this.frame += 1;
 
-            this.raycaster.ray.origin.copy(this.controls.getObject().position);
-            this.raycaster.ray.origin.y -= 10;
             var time = performance.now();
             var delta = (time - this.prevTime) / 1000;
             this.player.velocity.x -= this.player.velocity.x * 10.0 * delta;
@@ -313,17 +307,6 @@
                 playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
                 delete (playerInfo.direction);
                 document.getElementById('info').textContent = JSON.stringify(playerInfo);
-            }
-
-            this.stats.update();
-
-            // получаем объекты, на которые смотрим
-            this.raycaster.setFromCamera( this.crosshair, this.camera );
-            let intersects = this.raycaster.intersectObjects( this.scene.children );
-
-            if (intersects.length > 0) {
-                console.log(intersects);
-                console.log(this.scene.children);
             }
 
             this.renderer.render(this.scene, this.camera);
