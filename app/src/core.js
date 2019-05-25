@@ -61,8 +61,8 @@ function Core(config) {
 
     // настройки
     if (this.config.grid) {
-        const gridHelper = new THREE.GridHelper(10, 10);
-        gridHelper.position.y = -1;
+        const gridHelper = new THREE.GridHelper(100, 100, 0xCCFF00); // размерность, кол-во, цвет
+        gridHelper.position.y = 0;
         this.scene.add(gridHelper);
     }
     if (this.config.stats) {
@@ -70,8 +70,11 @@ function Core(config) {
         document.body.appendChild( this.stats.dom );
     }
 
+    // позиция камеры по умолчанию
+
     // управление камерой - вынести в модули
     if (this.config.preset === 'fps') {
+        this.camera.position.set(0, 50, 0);
         this.controls = new THREE.PointerLockControls(this.camera);
         this.scene.add(this.controls.getObject());
         document.addEventListener('click', () => {
@@ -88,6 +91,12 @@ function Core(config) {
             isDuck: false,
             velocity: new THREE.Vector3(),
             direction: new THREE.Vector3(),
+
+            jumpVelocity: 50,
+            duckVelocity: 5,
+            walkVelocity: 10,
+            runVelocity: 20,
+            mass: 20
         };
 
         // куда смотрим
@@ -117,7 +126,6 @@ function Core(config) {
                     this.player.moveRight = true;
                     break;
                 case 32: // space
-                    if (this.player.isJump === false) this.player.velocity.y += 350;
                     this.player.isJump = true;
                     break;
                 case 67: // c
@@ -162,7 +170,8 @@ function Core(config) {
 
     }  else {
         this.controls = new OrbitControls(this.camera);
-        this.camera.position.set(3, 2, 3);
+        this.camera.position.set(4, 2, 3);
+        this.controls.target.set(0, 0, 0);
         this.controls.update();
     }
 
@@ -217,7 +226,7 @@ function Core(config) {
 
         // обработка физики персонажа
         if (this.player) {
-            this.playerUpdate(delta/1000);
+            this.playerUpdate(delta);
         }
 
         requestAnimationFrame(this.update);
@@ -227,42 +236,50 @@ function Core(config) {
      * helpers
      */
     this.playerUpdate = (delta) => {
-        this.player.velocity.x -= this.player.velocity.x * 10.0 * delta;
-        this.player.velocity.z -= this.player.velocity.z * 10.0 * delta;
-        this.player.velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+        this.player.velocity.x -= this.player.velocity.x;
+        this.player.velocity.z -= this.player.velocity.z;
+        this.player.velocity.y -= 9.8 * this.player.mass; // 100.0 = mass
+
         this.player.direction.z = Number(this.player.moveForward) - Number(this.player.moveBackward);
         this.player.direction.x = Number(this.player.moveLeft) - Number(this.player.moveRight);
         this.player.direction.normalize();
 
         // wasd перемещения
         if (this.player.moveForward || this.player.moveBackward) {
-            this.player.velocity.z -= this.player.direction.z * 1500.0 * delta;
+            this.player.velocity.z -= this.player.direction.z * this.player.walkVelocity;
         }
         if (this.player.moveLeft || this.player.moveRight) {
-            this.player.velocity.x -= this.player.direction.x * 1500.0 * delta;
+            this.player.velocity.x -= this.player.direction.x * this.player.walkVelocity;
         }
 
         // бег ускоряет движение ВПЕРЁД
         if (this.player.isRun) {
-            this.player.velocity.z -= this.player.direction.z * 20.0;
+            this.player.velocity.z -= this.player.direction.z * this.player.runVelocity;
         }
+
         // на кортах медленее в ЛЮБОМ НАПРАВЛЕНИИ
         if (this.player.isDuck) {
-            this.player.velocity.z += this.player.direction.z * 10.0;
-            this.player.velocity.x += this.player.direction.x * 10.0;
+            this.player.velocity.z -= this.player.direction.z * this.player.duckVelocity;
+            this.player.velocity.x -= this.player.direction.x * this.player.duckVelocity;
         }
+
+        if (this.player.isJump === false) {
+            this.player.velocity.y += this.player.jumpVelocity;
+        }
+
 
         this.controls.getObject().translateX(this.player.velocity.x * delta);
         this.controls.getObject().translateY(this.player.velocity.y * delta);
         this.controls.getObject().translateZ(this.player.velocity.z * delta);
-        if (this.controls.getObject().position.y < 20) {
+
+        if (this.controls.getObject().position.y < 2) {
             this.player.velocity.y = 0;
-            this.controls.getObject().position.y = 20;
             this.player.isJump = false;
+            this.controls.getObject().position.y = 2;
         }
 
         if (this.player.isDuck) {
-            this.controls.getObject().position.y = 10;
+            this.controls.getObject().position.y = 1;
         }
 
         if (this.renderer.info.render.frame % 6 === 0) {
@@ -271,7 +288,7 @@ function Core(config) {
             playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
             playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
             delete (playerInfo.direction);
-            console.log(JSON.stringify(playerInfo));
+            // console.log(JSON.stringify(playerInfo));
         }
     };
 

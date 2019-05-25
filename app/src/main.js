@@ -7,7 +7,9 @@ import {
     Vector3,
 } from 'three';
 
-let core = new Core({
+let core = new Core(
+    {
+    // preset: 'default',
     preset: 'fps',
     grid: true,
     stats: true
