@@ -21,7 +21,8 @@ function Core(config) {
             this.camera.attachControl(canvas, true);
         }
 
-        // First person - специальные настройки для камеры и управления
+        // First person - специальные настройки для камеры и управления,  см
+        // https://www.babylonjs-playground.com/#E8C51D#35
         if (this.config.preset === 'fp') {
             let initVector = new BABYLON.Vector3(this.config.initPos.x, 2, this.config.initPos.z);
             this.camera = new BABYLON.FreeCamera("FreeCamera", initVector, this.scene);
@@ -45,6 +46,12 @@ function Core(config) {
             canvas.addEventListener('click', () => {
                 canvas.requestPointerLock();
                 this.camera.attachControl(canvas, true);
+
+                // переназначаем управление на WASD
+                this.camera.keysUp = [87];
+                this.camera.keysDown = [83];
+                this.camera.keysLeft = [65];
+                this.camera.keysRight = [68];
             }, false);
 
             this.cursor = {
@@ -52,29 +59,30 @@ function Core(config) {
                 y: canvas.height / 2,
             };
 
-            // TODO: 1) координаты абсолютные, 2) по диагонали слишком быстро 3) на WASD не чекаются коллизии
-            // let inputMap = {};
-            // this.scene.actionManager = new BABYLON.ActionManager(this.scene);
-            // this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
-            //     inputMap[evt.sourceEvent.key] = evt.sourceEvent.type === "keydown";
-            // }));
-            // this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
-            //     inputMap[evt.sourceEvent.key] = evt.sourceEvent.type === "keydown";
-            // }));
-            // this.scene.onBeforeRenderObservable.add(() => {
-            //     if(inputMap["w"]){
-            //         this.camera.position.z-=0.1;
-            //     }
-            //     if(inputMap["a"]){
-            //         this.camera.position.x+=0.1;
-            //     }
-            //     if(inputMap["s"]){
-            //         this.camera.position.z+=0.1;
-            //     }
-            //     if(inputMap["d"]){
-            //         this.camera.position.x-=0.1;
-            //     }
-            // })
+            let inputMap = {};
+            this.scene.actionManager = new BABYLON.ActionManager(this.scene);
+            this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.keyCode] = evt.sourceEvent.type === "keydown";
+            }));
+            this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.keyCode] = evt.sourceEvent.type === "keydown";
+            }));
+
+            this.scene.onBeforeRenderObservable.add(() => {
+
+
+                let countPressed = Object.values(inputMap).filter(x => x).length;
+
+                // бег только вперёд
+                let speed = (inputMap[87] && inputMap[16]) ? this.config.runSpeed : this.config.walkSpeed;
+
+                // по диагонали
+                if ((inputMap[87] || inputMap[83]) && (inputMap[65] || inputMap[68])) {
+                    this.camera.speed = speed * 0.707; // Math.sqrt(speed) / (2*speed);
+                } else {
+                    this.camera.speed = speed;
+                }
+            })
         }
 
         if (this.config.debug) {
@@ -136,6 +144,8 @@ function Core(config) {
     };
 
     this.update = () => {
+
+
         this.tick(this.scene, this.camera);
         this.scene.render();
     }
