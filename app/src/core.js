@@ -82,6 +82,10 @@ function Core(config) {
                 } else {
                     this.camera.speed = speed;
                 }
+
+                // https://www.babylonjs-playground.com/#WU3H37#7
+                if (inputMap[32]) {
+                }
             })
         }
 

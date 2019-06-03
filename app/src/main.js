@@ -8,7 +8,7 @@ let core = new Core({
     debug: false,
     fog: true,
     minimap: true,
-    initPos: {x:10, z: 10},
+    initPos: {x:0, z: 0},
     walkSpeed: 1,
     runSpeed: 2
 });
@@ -19,11 +19,11 @@ core.init = (scene, camera) => {
 
     let wall = BABYLON.MeshBuilder.CreateBox("wall", {height: 8, width: 0.1, depth: 8}, scene);
     wall.position.y = 0;
-    wall.isVisible = false;
+    wall.isVisible = true;
     wall.checkCollisions = true;
 
     var range = 60;
-    var count = 100;
+    var count = 10;
     for (let index = 0; index < count; index++) {
         let newInstance = wall.createInstance("i" + index);
         let x = range / 2 - Math.random() * range;
