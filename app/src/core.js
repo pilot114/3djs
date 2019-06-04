@@ -21,7 +21,14 @@ function Core(config) {
             this.camera.attachControl(canvas, true);
         }
 
-        // First person - специальные настройки для камеры и управления,  см
+        this.ground = null;
+        if (this.config.grid) {
+            this.ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 100, 0, 10, this.scene, false);
+            this.ground.material = new BABYLON.GridMaterial("groundMaterial", this.scene);
+            this.ground.checkCollisions = true;
+        }
+
+        // First person - специальные настройки для камеры и управления
         // https://www.babylonjs-playground.com/#E8C51D#35
         if (this.config.preset === 'fp') {
             let initVector = new BABYLON.Vector3(this.config.initPos.x, 2, this.config.initPos.z);
@@ -32,6 +39,8 @@ function Core(config) {
             this.camera.inertia = 0.5;
             this.camera.speed = 1;
             this.camera.minZ = 0;
+
+            this.scene.enablePhysics(null, new BABYLON.OimoJSPlugin());
 
             this.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
             this.scene.collisionsEnabled = true;
@@ -83,8 +92,30 @@ function Core(config) {
                     this.camera.speed = speed;
                 }
 
+
                 // https://www.babylonjs-playground.com/#WU3H37#7
                 if (inputMap[32]) {
+
+                    // TODO: set need camera mesh!!!
+                    this.camera.physicsImpostor = new BABYLON.PhysicsImpostor(
+                        this.camera,
+                        BABYLON.PhysicsImpostor.BoxImpostor, { mass: 2, friction: 0.0, restitution: 0.3 },
+                        this.scene
+                    );
+
+                    this.ground.physicsImpostor = new BABYLON.PhysicsImpostor(
+                        this.ground,
+                        BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, friction: 0.0, restitution: 0.7 },
+                        this.scene
+                    );
+
+                    //Impulse Settings
+                    let impulseDirection = new BABYLON.Vector3(0, 1, 0);
+                    let impulseMagnitude = 5;
+                    let contactLocalRefPoint = BABYLON.Vector3.Zero();
+                    let Pulse = () =>  {
+                        this.camera.physicsImpostor.applyImpulse(impulseDirection.scale(impulseMagnitude), this.camera.getAbsolutePosition().add(contactLocalRefPoint));
+                    }
                 }
             })
         }
@@ -101,14 +132,6 @@ function Core(config) {
             this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
             this.scene.fogDensity = 0.05;
             this.scene.fogColor = this.scene.clearColor;
-        }
-
-        if (this.config.grid) {
-            let ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 100, 0, 10, this.scene, false);
-            ground.material = new BABYLON.GridMaterial("groundMaterial", this.scene);
-
-            //
-            ground.checkCollisions = true;
         }
 
         // TODO

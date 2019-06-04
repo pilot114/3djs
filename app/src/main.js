@@ -8,7 +8,7 @@ let core = new Core({
     debug: false,
     fog: true,
     minimap: true,
-    initPos: {x:0, z: 0},
+    initPos: {x:10, z: 10},
     walkSpeed: 1,
     runSpeed: 2
 });
