@@ -287,6 +287,7 @@
             this.controls.getObject().translateX(this.player.velocity.x * delta);
             this.controls.getObject().translateY(this.player.velocity.y * delta);
             this.controls.getObject().translateZ(this.player.velocity.z * delta);
+
             if (this.controls.getObject().position.y < 20) {
                 this.player.velocity.y = 0;
                 this.controls.getObject().position.y = 20;
