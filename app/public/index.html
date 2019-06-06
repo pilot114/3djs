@@ -22,6 +22,21 @@
             height: 100%;
             touch-action: none;
         }
+
+        #info {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            position: absolute;
+            border-radius: 3px;
+            top: 0;
+            left: 80px;
+            text-align: center;
+            z-index: 100;
+            display: block;
+            background-color: white;
+            padding: 1em;
+            height: 3em;
+            opacity: .5;
+        }
     </style>
     <script src="https://preview.babylonjs.com/babylon.js"></script>
     <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -30,6 +45,7 @@
     <script src="https://cdn.babylonjs.com/Oimo.js"></script>
 </head>
 <body>
+    <div id="info"></div>
     <canvas id="renderCanvas" touch-action="none"></canvas>
 </body>
 </html>

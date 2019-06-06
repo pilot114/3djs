@@ -56,6 +56,15 @@ function Core(config) {
 
             this.scene.collisionsEnabled = true;
 
+            this.cursor = {
+                x: this.canvas.width / 2,
+                y: this.canvas.height / 2,
+            };
+
+            this.player = new Player();
+            document.addEventListener('keydown', this.player.onKeyDown, false);
+            document.addEventListener('keyup', this.player.onKeyUp, false);
+
             // привязываем камеру к курсору, чувствительность
             this.canvas.addEventListener('click', () => {
                 this.canvas.requestPointerLock();
@@ -67,15 +76,6 @@ function Core(config) {
                 this.camera.keysLeft = [65];
                 this.camera.keysRight = [68];
             }, false);
-
-            this.cursor = {
-                x: this.canvas.width / 2,
-                y: this.canvas.height / 2,
-            };
-
-            this.player = new Player();
-            document.addEventListener('keydown', this.player.onKeyDown, false);
-            document.addEventListener('keyup', this.player.onKeyUp, false);
         }
 
         if (this.config.debug) {
@@ -132,7 +132,10 @@ function Core(config) {
         let delta = this.engine.getDeltaTime() / 1000;
 
         this.player.update(delta);
-        console.log(this.player.getInfo());
+
+        if (this.scene._frameId % 6 === 0 || !document.getElementById('info').textContent) {
+            document.getElementById('info').textContent = this.player.getInfo();
+        }
 
         this.tick(this.scene, this.camera);
         this.scene.render();

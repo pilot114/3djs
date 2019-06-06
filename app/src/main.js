@@ -22,18 +22,18 @@ core.init = (scene, camera) => {
     wall.isVisible = true;
     wall.checkCollisions = true;
 
-    var range = 60;
-    var count = 10;
-    for (let index = 0; index < count; index++) {
-        let newInstance = wall.createInstance("i" + index);
-        let x = range / 2 - Math.random() * range;
-        let z = range / 2 - Math.random() * range;
-        let y = 0;
-
-        newInstance.position = new BABYLON.Vector3(x, y, z);
-        newInstance.rotate(BABYLON.Axis.Y, Math.random() * Math.PI * 2, BABYLON.Space.WORLD);
-        newInstance.checkCollisions = true;
-    }
+    // var range = 60;
+    // var count = 10;
+    // for (let index = 0; index < count; index++) {
+    //     let newInstance = wall.createInstance("i" + index);
+    //     let x = range / 2 - Math.random() * range;
+    //     let z = range / 2 - Math.random() * range;
+    //     let y = 0;
+    //
+    //     newInstance.position = new BABYLON.Vector3(x, y, z);
+    //     newInstance.rotate(BABYLON.Axis.Y, Math.random() * Math.PI * 2, BABYLON.Space.WORLD);
+    //     newInstance.checkCollisions = true;
+    // }
 };
 
 core.tick = (scene, camera) => {

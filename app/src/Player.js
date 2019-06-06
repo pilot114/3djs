@@ -7,6 +7,7 @@ function Player() {
         isJump: false,
         isRun: false,
         isDuck: false,
+        position: new BABYLON.Vector3(),
         velocity: new BABYLON.Vector3(),
         direction: new BABYLON.Vector3(),
     };
@@ -18,35 +19,35 @@ function Player() {
      * document.addEventListener('keyup', onKeyUp, false);
      */
     this.onKeyDown = (event) => {
-        if (event.shiftKey && this.player.moveForward) {
-            this.player.isRun = true;
+        if (event.shiftKey && this.state.moveForward) {
+            this.state.isRun = true;
         }
 
         switch (event.keyCode) {
             case 38: // up
             case 87: // w
-                this.player.moveForward = true;
+                this.state.moveForward = true;
                 break;
             case 37: // left
             case 65: // a
-                this.player.moveLeft = true;
+                this.state.moveLeft = true;
                 break;
             case 40: // down
             case 83: // s
-                this.player.moveBackward = true;
+                this.state.moveBackward = true;
                 break;
             case 39: // right
             case 68: // d
-                this.player.moveRight = true;
+                this.state.moveRight = true;
                 break;
             case 32: // space
-                if (this.player.isJump === false) this.player.velocity.y += 350;
-                this.player.isJump = true;
+                if (this.state.isJump === false) this.state.velocity.y += 350;
+                this.state.isJump = true;
                 break;
             case 67: // c
-                if (this.player.isJump === false) {
-                    this.player.isDuck = true;
-                    this.player.isRun = false;
+                if (this.state.isJump === false) {
+                    this.state.isDuck = true;
+                    this.state.isRun = false;
                 }
                 break;
         }
@@ -55,45 +56,46 @@ function Player() {
         switch (event.keyCode) {
             case 38: // up
             case 87: // w
-                this.player.moveForward = false;
-                this.player.isRun = false;
+                this.state.moveForward = false;
+                this.state.isRun = false;
                 break;
             case 37: // left
             case 65: // a
-                this.player.moveLeft = false;
+                this.state.moveLeft = false;
                 break;
             case 40: // down
             case 83: // s
-                this.player.moveBackward = false;
+                this.state.moveBackward = false;
                 break;
             case 39: // right
             case 68: // d
-                this.player.moveRight = false;
+                this.state.moveRight = false;
                 break;
             case 67: // c
-                this.player.isDuck = false;
+                this.state.isDuck = false;
                 break;
         }
 
         if (!event.shiftKey) {
-            this.player.isRun = false;
+            this.state.isRun = false;
         }
     };
 
     this.update = (delta) => {
-        this.state.velocity.x -= this.state.velocity.x * 10.0 * delta;
-        this.state.velocity.z -= this.state.velocity.z * 10.0 * delta;
-        this.state.velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+        this.state.velocity.x -= this.state.velocity.x * delta;
+        this.state.velocity.z -= this.state.velocity.z * delta;
+        this.state.velocity.y -= 9.8 * delta;
+
+        // TODO: нормализовать для правильного расчета скорости
         this.state.direction.z = Number(this.state.moveForward) - Number(this.state.moveBackward);
         this.state.direction.x = Number(this.state.moveLeft) - Number(this.state.moveRight);
-        this.state.direction.normalize();
 
         // wasd перемещения
         if (this.state.moveForward || this.state.moveBackward) {
-            this.state.velocity.z -= this.state.direction.z * 1500.0 * delta;
+            this.state.velocity.z -= this.state.direction.z * delta * 1500.0;
         }
         if (this.state.moveLeft || this.state.moveRight) {
-            this.state.velocity.x -= this.state.direction.x * 1500.0 * delta;
+            this.state.velocity.x -= this.state.direction.x * delta * 1500.0;
         }
 
         // бег ускоряет движение ВПЕРЁД
@@ -120,13 +122,18 @@ function Player() {
         // if (this.state.isDuck) {
         //     this.controls.getObject().position.y = 10;
         // }
+
+        if (this.state.position.y <= 0) {
+            this.state.position.y = 0;
+            this.state.velocity.y = 0;
+        }
     };
 
     this.getInfo = () => {
         let playerInfo = Object.assign({}, this.state);
-        playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
-        playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
-        playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
+        // playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
+        // playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
+        // playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
         delete (playerInfo.direction);
         return JSON.stringify(playerInfo);
     }
