@@ -1,16 +1,29 @@
-function Player() {
+/**
+ * Связывание управления с поворотом и расположением некоторого объекта.
+ * Расположение камеры относительно этого объекта определяет тип камеры (от первого/третьего лица)
+ */
+function Player(position) {
     this.state = {
         moveForward: false,
         moveBackward: false,
         moveLeft: false,
         moveRight: false,
-        isJump: false,
         isRun: false,
         isDuck: false,
-        position: new BABYLON.Vector3(),
-        velocity: new BABYLON.Vector3(),
+
+        // локальные значения - так удобнее для управления
         direction: new BABYLON.Vector3(),
+        velocity: new BABYLON.Vector3(),
+        rotation: new BABYLON.Vector3(),
+
+        // абсолютные значения
+        position: position || new BABYLON.Vector3(),
     };
+    // TODO: добавить использование констант, сделать расчет итогового position
+    const WALK_VELOCITY = 2;
+    const RUN_MULT   = 2;
+    const DUCK_MULT  = 0.5;
+    const STRAFE_MULT  = 1;
 
     /**
      * using:
@@ -40,15 +53,8 @@ function Player() {
             case 68: // d
                 this.state.moveRight = true;
                 break;
-            case 32: // space
-                if (this.state.isJump === false) this.state.velocity.y += 350;
-                this.state.isJump = true;
-                break;
             case 67: // c
-                if (this.state.isJump === false) {
-                    this.state.isDuck = true;
-                    this.state.isRun = false;
-                }
+                this.state.isDuck = true;
                 break;
         }
     };
@@ -82,59 +88,23 @@ function Player() {
     };
 
     this.update = (delta) => {
-        this.state.velocity.x -= this.state.velocity.x * delta;
-        this.state.velocity.z -= this.state.velocity.z * delta;
-        this.state.velocity.y -= 9.8 * delta;
-
-        // TODO: нормализовать для правильного расчета скорости
+        // локальное нормальное направление (-1,0 или 1)
         this.state.direction.z = Number(this.state.moveForward) - Number(this.state.moveBackward);
         this.state.direction.x = Number(this.state.moveLeft) - Number(this.state.moveRight);
 
-        // wasd перемещения
+        this.state.velocity.z = this.state.direction.z;
+        this.state.velocity.x = this.state.direction.x;
+
         if (this.state.moveForward || this.state.moveBackward) {
-            this.state.velocity.z -= this.state.direction.z * delta * 1500.0;
+            this.state.velocity.z = WALK_VELOCITY * this.state.direction.z;
         }
         if (this.state.moveLeft || this.state.moveRight) {
-            this.state.velocity.x -= this.state.direction.x * delta * 1500.0;
-        }
-
-        // бег ускоряет движение ВПЕРЁД
-        if (this.state.isRun) {
-            this.state.velocity.z -= this.state.direction.z * 20.0;
-        }
-        // на кортах медленее в ЛЮБОМ НАПРАВЛЕНИИ
-        if (this.state.isDuck) {
-            this.state.velocity.z += this.state.direction.z * 10.0;
-            this.state.velocity.x += this.state.direction.x * 10.0;
-        }
-
-        // TODO: use Babylon control
-        // this.controls.getObject().translateX(this.state.velocity.x * delta);
-        // this.controls.getObject().translateY(this.state.velocity.y * delta);
-        // this.controls.getObject().translateZ(this.state.velocity.z * delta);
-        //
-        // if (this.controls.getObject().position.y < 20) {
-        //     this.state.velocity.y = 0;
-        //     this.controls.getObject().position.y = 20;
-        //     this.state.isJump = false;
-        // }
-        //
-        // if (this.state.isDuck) {
-        //     this.controls.getObject().position.y = 10;
-        // }
-
-        if (this.state.position.y <= 0) {
-            this.state.position.y = 0;
-            this.state.velocity.y = 0;
+            this.state.velocity.x = WALK_VELOCITY * this.state.direction.x;
         }
     };
 
     this.getInfo = () => {
         let playerInfo = Object.assign({}, this.state);
-        // playerInfo.velocity.x = playerInfo.velocity.x.toFixed(0);
-        // playerInfo.velocity.y = playerInfo.velocity.y.toFixed(0);
-        // playerInfo.velocity.z = playerInfo.velocity.z.toFixed(0);
-        delete (playerInfo.direction);
         return JSON.stringify(playerInfo);
     }
 }
