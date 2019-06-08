@@ -10,7 +10,8 @@
     "oimo": "^1.0.9",
     "stats.js": "^0.17.0",
     "three": "^0.104.0",
-    "vue": "^2.6.10"
+    "vue": "^2.6.10",
+    "querystringify": ">=2.0.0"
   },
   "devDependencies": {
     "@vue/cli-service": "^3.7.0",
