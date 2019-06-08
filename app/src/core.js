@@ -4,6 +4,7 @@ function Core(config) {
     this.config = config;
     this.canvas = document.getElementById("renderCanvas");
     this.engine = new BABYLON.Engine(this.canvas, true);
+    this.forUpdate = [];
 
     // хуки
     this.init = (scene, camera) => {
@@ -61,9 +62,8 @@ function Core(config) {
                 y: this.canvas.height / 2,
             };
 
-            this.player = new Player();
-            document.addEventListener('keydown', this.player.onKeyDown, false);
-            document.addEventListener('keyup', this.player.onKeyUp, false);
+            let player = new Player(this.camera, initVector);
+            this.add(player);
 
             // привязываем камеру к курсору, чувствительность
             this.canvas.addEventListener('click', () => {
@@ -71,10 +71,14 @@ function Core(config) {
                 this.camera.attachControl(this.canvas, true);
 
                 // переназначаем управление на WASD
-                this.camera.keysUp = [87];
-                this.camera.keysDown = [83];
-                this.camera.keysLeft = [65];
-                this.camera.keysRight = [68];
+                this.camera.keysUp = [];
+                this.camera.keysDown = [];
+                this.camera.keysLeft = [];
+                this.camera.keysRight = [];
+                // this.camera.keysUp = [87];
+                // this.camera.keysDown = [83];
+                // this.camera.keysLeft = [65];
+                // this.camera.keysRight = [68];
             }, false);
         }
 
@@ -130,15 +134,33 @@ function Core(config) {
 
     this.update = () => {
         let delta = this.engine.getDeltaTime() / 1000;
+        this.forUpdate.forEach(obj => obj.update(delta));
 
-        this.player.update(delta);
-
-        if (this.scene._frameId % 6 === 0 || !document.getElementById('info').textContent) {
-            document.getElementById('info').textContent = this.player.getInfo();
+        if (this.scene._frameId % 6 === 0) {
+            document.getElementById('info').textContent = this.get('Player').getInfo();
         }
 
         this.tick(this.scene, this.camera);
         this.scene.render();
+    };
+
+    /**
+     * Добавляет объекты с цикл обработки
+     */
+    this.add = (obj) => {
+        if(obj.hasOwnProperty('onKeyDown')){
+            document.addEventListener('keydown', obj.onKeyDown, false);
+        }
+        if(obj.hasOwnProperty('onKeyUp')){
+            document.addEventListener('keyup', obj.onKeyUp, false);
+        }
+        this.forUpdate.push(obj);
+    }
+    /**
+     * Получаем объект
+     */
+    this.get = (name) => {
+        return this.forUpdate.filter(x => x.name === name)[0];
     }
 }
 
