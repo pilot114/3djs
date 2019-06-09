@@ -90,11 +90,11 @@ function Player(camera, position) {
     this.update = (delta) => {
         // локальное нормальное направление (-1 до 1)
         this.state.direction.z = Number(this.state.moveForward) - Number(this.state.moveBackward);
-        this.state.direction.x = -(Number(this.state.moveLeft) - Number(this.state.moveRight));
+        this.state.direction.x = (Number(this.state.moveLeft) - Number(this.state.moveRight));
         this.state.direction = this.state.direction.normalize();
         // Поправка на бег
         if (this.state.isRun && (this.state.moveLeft || this.state.moveRight)) {
-            this.state.direction.z = this.state.direction.z * Math.sqrt(7)/2;
+            this.state.direction.z = this.state.direction.z * Math.sqrt(7) / 2;
         }
 
         this.state.velocity.z = this.state.direction.z;
@@ -120,18 +120,17 @@ function Player(camera, position) {
             this.state.velocity.z = this.state.velocity.z * RUN_MULT;
         }
 
-        let path = Math.sqrt(this.state.velocity.z*this.state.velocity.z + this.state.velocity.x*this.state.velocity.x);
+        let path = Math.sqrt(this.state.velocity.z * this.state.velocity.z + this.state.velocity.x * this.state.velocity.x);
         // проверка, что всё посчитано правильно, должно быть равно скорости
         // console.log(path);
-
-        // последнее - обновляем глобальные координаты
-        this.state.position.x += this.state.velocity.x;
-        this.state.position.z += this.state.velocity.z;
 
         // rotation берём с камеры, а position наоборот передаём в неё
         this.state.rotation = this.camera.rotation;
 
-        // TODO: устанавливать позицию учитывая поворот
+        // последнее - обновляем глобальные координаты
+        this.state.position.x += this.state.velocity.x * Math.cos(this.state.rotation.y - Math.PI) + this.state.velocity.z * Math.sin(this.state.rotation.y);
+        this.state.position.z += this.state.velocity.z * Math.cos(this.state.rotation.y) + this.state.velocity.x * Math.sin(this.state.rotation.y);
+
         this.camera.position = this.state.position;
     };
 
