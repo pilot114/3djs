@@ -12,6 +12,8 @@ function Player(camera, position) {
         moveRight: false,
         isRun: false,
         isDuck: false,
+        isJump: false,
+        onGround: false,
 
         // локальные значения - так удобнее для управления
         direction: new BABYLON.Vector3(),
@@ -24,6 +26,8 @@ function Player(camera, position) {
     const WALK_VELOCITY = 0.1;
     const RUN_MULT = 2;
     const DUCK_MULT = 0.5;
+    const JUMP_IMPULSE = 0.2;
+    const GRAVITY = 0.01; // 0.001 луна)
 
     /**
      * using:
@@ -55,6 +59,13 @@ function Player(camera, position) {
                 break;
             case 67: // c
                 this.state.isDuck = true;
+                break;
+            case 32: // space
+                if (!this.state.isJump) {
+                    this.state.isJump = true;
+                    this.state.onGround = false;
+                    this.state.velocity.y = JUMP_IMPULSE;
+                }
                 break;
         }
     };
@@ -91,14 +102,18 @@ function Player(camera, position) {
         // локальное нормальное направление (-1 до 1)
         this.state.direction.z = Number(this.state.moveForward) - Number(this.state.moveBackward);
         this.state.direction.x = (Number(this.state.moveLeft) - Number(this.state.moveRight));
+        // TODO направление по y определим, разобравшись с гравитацией
+        // this.state.direction.y = 1;
+
         this.state.direction = this.state.direction.normalize();
         // Поправка на бег
         if (this.state.isRun && (this.state.moveLeft || this.state.moveRight)) {
             this.state.direction.z = this.state.direction.z * Math.sqrt(7) / 2;
         }
 
-        this.state.velocity.z = this.state.direction.z;
+        // пока нет инерции, можно завязывать скорость на направлении
         this.state.velocity.x = this.state.direction.x;
+        this.state.velocity.z = this.state.direction.z;
 
         // WASD
         if (this.state.moveForward || this.state.moveBackward) {
@@ -106,6 +121,10 @@ function Player(camera, position) {
         }
         if (this.state.moveLeft || this.state.moveRight) {
             this.state.velocity.x = this.state.direction.x * WALK_VELOCITY;
+        }
+        // "гравитация"
+        if (this.state.isJump) {
+            this.state.velocity.y -= GRAVITY;
         }
 
         // замедление в любую сторону + отменяет бег
@@ -130,23 +149,32 @@ function Player(camera, position) {
         // последнее - обновляем глобальные координаты
         this.state.position.x += this.state.velocity.x * Math.cos(this.state.rotation.y - Math.PI) + this.state.velocity.z * Math.sin(this.state.rotation.y);
         this.state.position.z += this.state.velocity.z * Math.cos(this.state.rotation.y) + this.state.velocity.x * Math.sin(this.state.rotation.y);
+        this.state.position.y += this.state.velocity.y;
+        
+        if (this.state.position.y < 2) {
+            this.state.position.y = 2;
+            this.state.velocity.y = 0;
+            this.state.isJump = false;
+            this.state.onGround = true;
+        }
 
         this.camera.position = this.state.position;
     };
 
     this.getInfo = () => {
         let playerInfo = Object.assign({}, this.state);
-        playerInfo.direction.x = +playerInfo.direction.x.toFixed(2);
-        playerInfo.direction.z = +playerInfo.direction.z.toFixed(2);
-        playerInfo.velocity.x = +playerInfo.velocity.x.toFixed(2);
-        playerInfo.velocity.z = +playerInfo.velocity.z.toFixed(2);
-        playerInfo.position.x = +playerInfo.position.x.toFixed(2);
-        playerInfo.position.z = +playerInfo.position.z.toFixed(2);
-        playerInfo.position.y = +playerInfo.position.y.toFixed(2);
-        playerInfo.rotation.x = +playerInfo.rotation.x.toFixed(2);
-        playerInfo.rotation.z = +playerInfo.rotation.z.toFixed(2);
-        playerInfo.rotation.y = +playerInfo.rotation.y.toFixed(2);
-        return JSON.stringify(playerInfo);
+        let round = item => {
+            let precision = 2;
+            item.x = +item.x.toFixed(precision);
+            item.y = +item.y.toFixed(precision);
+            item.z = +item.z.toFixed(precision);
+            return item;
+        };
+        playerInfo.direction = round(playerInfo.direction);
+        playerInfo.velocity = round(playerInfo.velocity);
+        playerInfo.position = round(playerInfo.position);
+        playerInfo.rotation = round(playerInfo.rotation);
+        return playerInfo;
     }
 }
 

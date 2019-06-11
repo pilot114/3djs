@@ -7,10 +7,8 @@ function Core(config) {
     this.forUpdate = [];
 
     // хуки
-    this.init = (scene, camera) => {
-    };
-    this.tick = (scene, camera) => {
-    };
+    this.init = (scene, camera) => {};
+    this.tick = (scene, camera) => {};
 
     this.run = () => {
         this.scene = new BABYLON.Scene(this.engine);
@@ -127,7 +125,7 @@ function Core(config) {
             this.update();
         });
 
-        window.addEventListener("resize", function () {
+        window.addEventListener("resize", () => {
             this.engine.resize();
         });
     };
@@ -137,7 +135,14 @@ function Core(config) {
         this.forUpdate.forEach(obj => obj.update(delta));
 
         if (this.scene._frameId % 6 === 0) {
-            document.getElementById('info').textContent = this.get('Player').getInfo();
+            let info = this.get('Player').getInfo();
+            // info = JSON.stringify(info);
+            document.getElementById('info').innerHTML = '';
+            for (let key in info) {
+                document.getElementById('info').appendChild(document.createTextNode(key + ': ' + info[key]));
+                document.getElementById('info').appendChild(document.createElement('br'));
+            }
+
         }
 
         this.tick(this.scene, this.camera);
@@ -155,7 +160,7 @@ function Core(config) {
             document.addEventListener('keyup', obj.onKeyUp, false);
         }
         this.forUpdate.push(obj);
-    }
+    };
     /**
      * Получаем объект
      */
