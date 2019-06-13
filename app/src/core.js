@@ -1,4 +1,4 @@
-import {Player} from "./Player";
+import {PlayerControl} from "./PlayerControl";
 
 function Core(config) {
     this.config = config;
@@ -60,8 +60,8 @@ function Core(config) {
                 y: this.canvas.height / 2,
             };
 
-            let player = new Player(this.camera, initVector);
-            this.add(player);
+            let pControl = new PlayerControl(this.camera, initVector);
+            this.add(pControl);
 
             // привязываем камеру к курсору, чувствительность
             this.canvas.addEventListener('click', () => {
@@ -135,7 +135,7 @@ function Core(config) {
         this.forUpdate.forEach(obj => obj.update(delta));
 
         if (this.scene._frameId % 6 === 0) {
-            let info = this.get('Player').getInfo();
+            let info = this.get('PlayerControl').getInfo();
             // info = JSON.stringify(info);
             document.getElementById('info').innerHTML = '';
             for (let key in info) {
