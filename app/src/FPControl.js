@@ -2,9 +2,11 @@
  * Связывание управления с поворотом и расположением некоторого объекта (игрока).
  * Расположение камеры относительно этого объекта определяет тип камеры (от первого/третьего лица)
  */
-function PlayerControl(camera, position, gravity) {
+function FPControl(camera, body, position, gravity) {
     this.name = 'PlayerControl';
     this.camera = camera;
+    this.body = body;
+
     this.state = {
         moveForward: false,
         moveBackward: false,
@@ -177,6 +179,8 @@ function PlayerControl(camera, position, gravity) {
             this.eventQueue = [];
         }
 
+        this.body.position = this.state.position;
+        this.body.rotation = this.camera.rotation;
         this.camera.position = this.state.position;
     };
 
@@ -197,4 +201,4 @@ function PlayerControl(camera, position, gravity) {
     }
 }
 
-export {PlayerControl}
+export {FPControl}

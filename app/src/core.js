@@ -1,4 +1,4 @@
-import {PlayerControl} from "./PlayerControl";
+import {FPControl} from "./FPControl";
 
 function Core(config) {
     this.config = config;
@@ -15,9 +15,9 @@ function Core(config) {
         this.scene.clearColor = BABYLON.Color3.Black();
 
         if (this.config.preset === 'default') {
-            this.camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(10, 10, 10), this.scene);
-            this.camera.setTarget(BABYLON.Vector3.Zero());
-            this.camera.attachControl(this.canvas, true);
+            let camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(10, 10, 10), this.scene);
+            camera.setTarget(BABYLON.Vector3.Zero());
+            camera.attachControl(this.canvas, true);
         }
 
         this.scene.enablePhysics(
@@ -43,15 +43,6 @@ function Core(config) {
         if (this.config.preset === 'fp') {
             let initVector = new BABYLON.Vector3(this.config.initPos.x, 2, this.config.initPos.z);
 
-            this.camera = new BABYLON.FreeCamera("FreeCamera", initVector, this.scene);
-            this.camera.setTarget(BABYLON.Vector3.Zero());
-            this.camera.angularSensibility = 800;
-            this.camera.inertia = 0.5;
-            this.camera.speed = 1;
-            this.camera.minZ = 0;
-
-            this.camera.checkCollisions = true;
-            this.camera.applyGravity = true;
 
             this.scene.collisionsEnabled = true;
 
@@ -60,24 +51,28 @@ function Core(config) {
                 y: this.canvas.height / 2,
             };
 
-            let pControl = new PlayerControl(this.camera, initVector);
-            this.add(pControl);
+            let camera = new BABYLON.FreeCamera("FreeCamera", BABYLON.Vector3.Zero(), this.scene);
+            camera.position.y = 2;
+            camera.setTarget(initVector);
+            camera.angularSensibility = 800;
+            camera.inertia = 0.5;
 
             // привязываем камеру к курсору, чувствительность
             this.canvas.addEventListener('click', () => {
                 this.canvas.requestPointerLock();
-                this.camera.attachControl(this.canvas, true);
+                camera.attachControl(this.canvas, true);
 
                 // переназначаем управление на WASD
-                this.camera.keysUp = [];
-                this.camera.keysDown = [];
-                this.camera.keysLeft = [];
-                this.camera.keysRight = [];
-                // this.camera.keysUp = [87];
-                // this.camera.keysDown = [83];
-                // this.camera.keysLeft = [65];
-                // this.camera.keysRight = [68];
+                camera.keysUp = [];
+                camera.keysDown = [];
+                camera.keysLeft = [];
+                camera.keysRight = [];
             }, false);
+
+            let body = BABYLON.Mesh.CreateBox("PlayerBody", 2, this.scene);
+
+            let pControl = new FPControl(camera, body, initVector);
+            this.add(pControl);
         }
 
         if (this.config.debug) {
@@ -94,32 +89,7 @@ function Core(config) {
             this.scene.fogColor = this.scene.clearColor;
         }
 
-        // TODO
-        if (this.config.minimap) {
-            let mm = new BABYLON.FreeCamera("minimap", new BABYLON.Vector3(0, 100, 0), this.scene);
-            mm.setTarget(new BABYLON.Vector3(0.1, 0.1, 0.1));
-            mm.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
-
-            mm.orthoLeft = -this.size / 2;
-            mm.orthoRight = this.size / 2;
-            mm.orthoTop = this.size / 2;
-            mm.orthoBottom = -this.size / 2;
-            mm.rotation.x = Math.PI / 2;
-
-            mm.viewport = new BABYLON.Viewport(
-                0.8,
-                0.75,
-                0.1,
-                0.1
-            );
-
-            this.scene.activeCameras.push(mm);
-            this.scene.activeCameras.push(this.camera);
-            mm.layerMask = 1;
-            this.camera.layerMask = 2;
-        }
-
-        this.init(this.scene, this.camera);
+        this.init(this.scene);
 
         this.engine.runRenderLoop(() => {
             this.update();
@@ -136,7 +106,6 @@ function Core(config) {
 
         if (this.scene._frameId % 6 === 0) {
             let info = this.get('PlayerControl').getInfo();
-            // info = JSON.stringify(info);
             document.getElementById('info').innerHTML = '';
             for (let key in info) {
                 document.getElementById('info').appendChild(document.createTextNode(key + ': ' + info[key]));
@@ -145,7 +114,7 @@ function Core(config) {
 
         }
 
-        this.tick(this.scene, this.camera);
+        this.tick(this.scene);
         this.scene.render();
     };
 

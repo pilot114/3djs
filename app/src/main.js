@@ -13,7 +13,7 @@ let core = new Core({
     runSpeed: 2
 });
 
-core.init = (scene, camera) => {
+core.init = (scene) => {
     // добавление объектов
     new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
 
@@ -36,7 +36,7 @@ core.init = (scene, camera) => {
     }
 };
 
-core.tick = (scene, camera) => {
+core.tick = (scene) => {
     // var pickResult = scene.pick(core.cursor.x, core.cursor.y);
     // if (pickResult.hit) {
     //     console.log(pickResult.pickedMesh.id);
