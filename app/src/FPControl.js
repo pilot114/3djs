@@ -179,8 +179,13 @@ function FPControl(camera, body, position, gravity) {
             this.eventQueue = [];
         }
 
-        this.body.position = this.state.position;
+        if (this.state.isDuck && !this.state.isJump) {
+            // TODO: на самом деле, в присяде нужно не занижать, а уменьшать по оси y
+            this.state.position.y -= 1;
+        }
+
         this.body.rotation = this.camera.rotation;
+        this.body.position = this.state.position;
         this.camera.position = this.state.position;
     };
 

@@ -5,6 +5,9 @@ function Core(config) {
     this.canvas = document.getElementById("renderCanvas");
     this.engine = new BABYLON.Engine(this.canvas, true);
     this.forUpdate = [];
+    this.playlist = [
+        'audio/i_am_program.mp3'
+    ];
 
     // хуки
     this.init = (scene, camera) => {};
@@ -54,7 +57,7 @@ function Core(config) {
             let camera = new BABYLON.FreeCamera("FreeCamera", BABYLON.Vector3.Zero(), this.scene);
             camera.position.y = 2;
             camera.setTarget(initVector);
-            camera.angularSensibility = 800;
+            camera.angularSensibility = 1500;
             camera.inertia = 0.5;
 
             // привязываем камеру к курсору, чувствительность
@@ -70,6 +73,7 @@ function Core(config) {
             }, false);
 
             let body = BABYLON.Mesh.CreateBox("PlayerBody", 2, this.scene);
+            body.checkCollisions = true;
 
             let pControl = new FPControl(camera, body, initVector);
             this.add(pControl);
@@ -98,6 +102,8 @@ function Core(config) {
         window.addEventListener("resize", () => {
             this.engine.resize();
         });
+
+        new BABYLON.Sound("Music", this.playlist[0], this.scene, null, { loop: true, autoplay: true });
     };
 
     this.update = () => {
