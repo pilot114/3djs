@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "oimo": "^1.0.9",
+    "querystringify": ">=2.0.0",
     "stats.js": "^0.17.0",
     "three": "^0.104.0",
-    "vue": "^2.6.10",
-    "querystringify": ">=2.0.0"
+    "vue": "^2.6.10"
   },
   "devDependencies": {
-    "@vue/cli-service": "^3.7.0",
+    "@vue/cli-service": "^4.5.11",
     "script-loader": "^0.7.2",
     "vue-template-compiler": "^2.5.21"
   },
