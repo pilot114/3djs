@@ -10,7 +10,7 @@
     "oimo": "^1.0.9",
     "querystringify": ">=2.0.0",
     "stats.js": "^0.17.0",
-    "three": "^0.104.0",
+    "three": "^0.125.0",
     "vue": "^2.6.10"
   },
   "devDependencies": {
