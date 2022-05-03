@@ -1,4 +1,5 @@
 import {FPControl} from "./FPControl";
+import * as BABYLON from 'babylonjs';
 
 function Core(config) {
     this.config = config;
@@ -31,7 +32,7 @@ function Core(config) {
         this.ground = null;
         if (this.config.grid) {
             this.ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 100, 0, 10, this.scene, false);
-            this.ground.material = new BABYLON.GridMaterial("groundMaterial", this.scene);
+            // this.ground.material = new BABYLON.GridMaterial("groundMaterial", this.scene);
             this.ground.checkCollisions = true;
 
             this.ground.physicsImpostor = new BABYLON.PhysicsImpostor(
