@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RTS</title>
+    <script src="render.js"></script>
+    <script src="state.js"></script>
+</head>
+<body>
+  <canvas id="rtsCanvas" width="1400" height="800" style="border:1px solid;"></canvas>
+  <script>
+    const isPause = false
+    const updatePerSecond = 25
+
+    const state = new State(
+        new Render(
+            document.getElementById("rtsCanvas")
+        )
+    )
+    setInterval(function() {
+      if (isPause) {
+        return
+      }
+      state.update()
+    }, 1000 / updatePerSecond)
+  </script>
+</body>
+</html>

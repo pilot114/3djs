@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "babylonjs": "^5.34.0"
+    "babylonjs": "^5.34.0",
+    "browserify": "^17.0.0",
+    "global": "^4.4.0",
+    "slp-render": "^2.1.0"
   }
 }
